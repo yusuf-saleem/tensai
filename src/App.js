@@ -18,7 +18,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import Select from "@mui/material/Select";
 import OutlinedInput from "@mui/material/OutlinedInput";
 
-const API_KEY = "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";
+const API_KEY = process.env.REACT_APP_API_KEY;
 
 const systemMessage = {
     role: "system",
@@ -225,7 +225,7 @@ function App() {
                 </AppBar>
             </Box>
             <div style={{ textAlign: "center" }}>
-                <h3>Try to translate the following sentence:</h3>
+                <h3>Try to translate the following sentence::</h3>
                 <h2 id="sentence" style={{ color: "grey" }}>
                     {currentSentence}
                 </h2>

@@ -33,7 +33,7 @@
         "test": "react-scripts test",
         "eject": "react-scripts eject",
         "predeploy": "npm run build",
-        "deploy": "gh-pages -d build"
+        "deploy": "gh-pages -d build u yusuf-saleem"
     },
     "eslintConfig": {
         "extends": [
@@ -56,5 +56,5 @@
     "devDependencies": {
         "gh-pages": "^5.0.0"
     },
-    "homepage": "https://ysaleem.github.io/lang/"
+    "homepage": "https://yusuf-saleem.github.io/lang/"
 }
