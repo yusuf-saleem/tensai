@@ -7,9 +7,9 @@ function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/lang" element={<Login />} />
-                <Route path="/lang/success" element={<Success/>} />
-                <Route path="*" element={<Navigate to="/lang" replace />} />
+                <Route path="" element={<Login />} />
+                <Route path="success" element={<Success/>} />
+                <Route path="*" element={<Navigate to="" replace />} />
             </Routes>
         </Router>
     )
