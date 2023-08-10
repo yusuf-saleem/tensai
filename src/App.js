@@ -5,7 +5,7 @@ import Success from './successPage'
 
 function App() {
     return (
-        <Router>
+        <Router basename="/lang">
             <Routes>
                 <Route path="/lang" element={<Login />} />
                 <Route path="/lang/success" element={<Success/>} />
