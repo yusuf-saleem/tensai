@@ -42,6 +42,6 @@ export default function App() {
             </div>
         );
     } else {
-        navigate("/lang/success");
+        navigate("success");
     }
 }

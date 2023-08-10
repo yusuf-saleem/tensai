@@ -224,7 +224,7 @@ function Success() {
 
     async function signOutUser() {
         const { error } = await supabase.auth.signOut();
-        navigate("/lang");
+        navigate("");
     }
 
     useEffect(() => {
