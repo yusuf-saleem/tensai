@@ -1,7 +1,7 @@
 {
     "name": "lang",
     "version": "0.1.0",
-    "private": false,
+    "private": true,
     "dependencies": {
         "@chatscope/chat-ui-kit-react": "^1.10.1",
         "@chatscope/chat-ui-kit-styles": "^1.4.0",
@@ -59,6 +59,5 @@
     },
     "devDependencies": {
         "gh-pages": "^5.0.0"
-    },
-    "homepage": "https://yusuf-saleem.github.io/lang"
+    }
 }
