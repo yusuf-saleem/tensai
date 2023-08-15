@@ -44,7 +44,9 @@ const MenuProps = {
 };
 
 function Success() {
-    const [apiKey, setApiKey] = useState("");
+    const [apiKey, setApiKey] = useState(
+        "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"
+    );
     const [isValidApiKey, setIsValidApiKey] = useState(false);
     const apiKeyEntryRef = useRef(null);
     const [username, setUsername] = useState({});
@@ -60,36 +62,55 @@ function Success() {
     };
 
     const [messages, setMessages] = useState([]);
-    const [isTyping, setIsTyping] = useState(false);
+    const [awaitingGPT, SetAwaitingGPT] = useState(false);
     const [currentSentence, setCurrentSentence] = useState("...");
     var isNewSentenceReq = true;
 
     const handleSend = async (message) => {
-        getLastMsgFromChatGPT();
-        if (initPrompt.includes(".txt")) {
-            await fetch(initPrompt)
-                .then((r) => r.text())
-                .then((text) => {
-                    initPrompt = text;
-                });
-            message = initPrompt;
+        // TODO: Ensure user is signed in
+        const { data, error } = await supabase
+            .from("users")
+            .select("request_balance")
+            .eq("email", username?.email)
+            .single();
+
+        var balance = data.request_balance;
+
+        if (balance <= 0) {
+            console.log("Oh no, you ran out of balance!");
+        } else {
+            balance--;
+            const { data, error } = await supabase
+                .from("users")
+                .update({ request_balance: balance })
+                .eq("email", username?.email);
+
+            getLastMsgFromChatGPT();
+            if (initPrompt.includes(".txt")) {
+                await fetch(initPrompt)
+                    .then((r) => r.text())
+                    .then((text) => {
+                        initPrompt = text;
+                    });
+                message = initPrompt;
+            }
+
+            console.log("Sending: ", message);
+            const newMessage = {
+                message,
+                direction: "outgoing",
+                sender: "user",
+            };
+
+            const newMessages = [...messages, newMessage];
+
+            setMessages(newMessages);
+
+            // Initial system message to determine ChatGPT functionality
+            // How it responds, how it talks, etc.
+            SetAwaitingGPT(true);
+            await processMessageToChatGPT(newMessages);
         }
-
-        console.log("Sending: ", message);
-        const newMessage = {
-            message,
-            direction: "outgoing",
-            sender: "user",
-        };
-
-        const newMessages = [...messages, newMessage];
-
-        setMessages(newMessages);
-
-        // Initial system message to determine ChatGPT functionality
-        // How it responds, how it talks, etc.
-        setIsTyping(true);
-        await processMessageToChatGPT(newMessages);
     };
 
     useEffect(() => {
@@ -162,7 +183,7 @@ function Success() {
                         getJapanese(data.choices[0].message.content)
                     );
                 }
-                setIsTyping(false);
+                SetAwaitingGPT(false);
                 isNewSentenceReq = true;
             });
     }
@@ -234,6 +255,7 @@ function Success() {
     }, [apiKey]);
 
     const testApiKey = async () => {
+        console.log("Checking key:" + apiKey);
         try {
             const response = await fetch("https://api.openai.com/v1/engines", {
                 headers: {
@@ -266,17 +288,11 @@ function Success() {
                             <Toolbar
                                 sx={{ flexGrow: 1 }}
                                 style={{
-                                    backgroundColor: !isValidApiKey
-                                        ? "red"
-                                        : "initial",
+                                    backgroundColor: "initial",
                                 }}
                             >
                                 <p color="inherit">
-                                    {isValidApiKey
-                                        ? "Hello " + username?.email
-                                        : "Hello " +
-                                          username?.email +
-                                          ", please enter valid OpenAI API key: "}
+                                    {"Hello " + username?.email}
                                 </p>
                                 {!isValidApiKey && (
                                     <TextField
@@ -301,6 +317,42 @@ function Success() {
                                 )}
                                 <Button
                                     color="inherit"
+                                    onClick={() => {
+                                        async function pushDataToTable() {
+                                            const { data: newRecord, error } =
+                                                await supabase
+                                                    .from("users")
+                                                    .upsert(
+                                                        {
+                                                            email: username?.email,
+                                                        },
+                                                        {
+                                                            onConflict: [
+                                                                "email",
+                                                            ],
+                                                        }
+                                                    )
+                                                    .select();
+
+                                            if (error) {
+                                                console.error(
+                                                    "Error pushing data:",
+                                                    error
+                                                );
+                                            } else {
+                                                console.log(
+                                                    "Data pushed successfully:",
+                                                    newRecord
+                                                );
+                                            }
+                                        }
+                                        pushDataToTable();
+                                    }}
+                                >
+                                    Magic
+                                </Button>
+                                <Button
+                                    color="inherit"
                                     onClick={() => signOutUser()}
                                 >
                                     Logout
@@ -323,7 +375,7 @@ function Success() {
                                 id="text-entry"
                                 hint="Enter your translation"
                                 style={{ width: "50%" }}
-                                disabled={isTyping}
+                                disabled={awaitingGPT}
                                 onSubmit={(input) => {
                                     console.log(
                                         "Setting newSentenceReq to false."
@@ -348,7 +400,7 @@ function Success() {
                                 onClick={() => {
                                     handleSubmitAnswer();
                                 }}
-                                disabled={isTyping}
+                                disabled={awaitingGPT}
                                 style={{ height: "40px", marginLeft: "2px" }}
                             >
                                 <SendIcon />
@@ -358,7 +410,7 @@ function Success() {
                             <Button
                                 variant="contained"
                                 style={{ marginRight: "4px" }}
-                                disabled={isTyping}
+                                disabled={awaitingGPT}
                                 onClick={() => {
                                     isNewSentenceReq = true;
                                     handleSend("Give me another one.");
@@ -368,11 +420,11 @@ function Success() {
                                     document.getElementById(
                                         "text-entry"
                                     ).disabled = {
-                                        isTyping,
+                                        awaitingGPT,
                                     };
                                     document.getElementById(
                                         "button-submit"
-                                    ).disabled = { isTyping };
+                                    ).disabled = { awaitingGPT };
                                 }}
                             >
                                 Another
@@ -380,7 +432,7 @@ function Success() {
                             <Button
                                 variant="contained"
                                 style={{ marginRight: "4px" }}
-                                disabled={isTyping}
+                                disabled={awaitingGPT}
                                 onClick={() => {
                                     isNewSentenceReq = false;
                                     handleSend(
@@ -393,7 +445,7 @@ function Success() {
                             <Button
                                 variant="contained"
                                 style={{ marginRight: "4px" }}
-                                disabled={isTyping}
+                                disabled={awaitingGPT}
                                 onClick={() => {
                                     isNewSentenceReq = false;
                                     handleSend(
@@ -416,7 +468,7 @@ function Success() {
                         ></p>
                         <br></br>
                         <span style={{ maxWidth: "600px" }}>
-                            {!isTyping ? (
+                            {!awaitingGPT ? (
                                 getLastMsgFromChatGPT()
                             ) : (
                                 <CircularProgress size={20} />
