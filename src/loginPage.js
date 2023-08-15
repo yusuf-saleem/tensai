@@ -32,11 +32,14 @@ export default function App() {
         return (
             <div className="App">
                 <header className="App-header">
+                    <h1>Welcome to Saiten</h1>
+                    <p>Please Log In</p>
                     <Auth
                         supabaseClient={supabase}
                         appearance={{ theme: ThemeSupa }}
                         theme="dark"
-                        providers={["google"]}
+                        onlyThirdPartyProviders="true"
+                        providers={["google", "discord"]}
                     />
                 </header>
             </div>
