@@ -21,6 +21,8 @@ import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
+import Dropdown from "react-dropdown";
+import "./dropdown.css";
 
 const supabase = createClient(
     "https://dsrgrtdunqtylmafczpg.supabase.co",
@@ -44,9 +46,7 @@ const MenuProps = {
 };
 
 function Success() {
-    const [apiKey, setApiKey] = useState(
-        "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"
-    );
+    const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
     const [isValidApiKey, setIsValidApiKey] = useState(false);
     const apiKeyEntryRef = useRef(null);
     const [username, setUsername] = useState({});
@@ -54,6 +54,7 @@ function Success() {
     const [anchorEl, setAnchorEl] = useState(null);
     const [enteredText, setEnteredText] = useState("");
     const open = Boolean(anchorEl);
+    const dropdownRef = useRef(null);
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -114,20 +115,28 @@ function Success() {
     };
 
     useEffect(() => {
+        registerNewUser();
         testApiKey();
-        async function getUserData() {
-            await supabase.auth.getUser().then((value) => {
-                if (value.data?.user) {
-                    setUsername(value.data.user);
-                }
-            });
-        }
         getUserData();
 
         if (isValidApiKey) {
             handleSend(initPrompt);
         }
     }, [isValidApiKey]); // <-- empty dependency array
+
+    async function registerNewUser() {
+        const { error } = await supabase
+            .from("users")
+            .insert({ email: username?.email });
+    }
+
+    async function getUserData() {
+        await supabase.auth.getUser().then((value) => {
+            if (value.data?.user) {
+                setUsername(value.data.user);
+            }
+        });
+    }
 
     async function processMessageToChatGPT(chatMessages) {
         // messages is an array of messages
@@ -279,8 +288,15 @@ function Success() {
         }
     };
 
+    const handleSelect = (selectedOption) => {
+        console.log(`Selected option: ${selectedOption.value}`); // Logging the selected option's value
+        if (selectedOption.value == "Logout") {
+            signOutUser();
+        }
+    };
+
     return (
-        <div style={{ textAlign: "center" }}>
+        <>
             {Object.keys(username).length !== 0 ? (
                 <>
                     <Box sx={{ flexGrow: 1 }}>
@@ -291,9 +307,7 @@ function Success() {
                                     backgroundColor: "initial",
                                 }}
                             >
-                                <p color="inherit">
-                                    {"Hello " + username?.email}
-                                </p>
+                                <p color="inherit">MichigaenAI</p>
                                 {!isValidApiKey && (
                                     <TextField
                                         id="apiKeyEntry"
@@ -315,48 +329,13 @@ function Success() {
                                         Test API Key
                                     </Button>
                                 )}
-                                <Button
-                                    color="inherit"
-                                    onClick={() => {
-                                        async function pushDataToTable() {
-                                            const { data: newRecord, error } =
-                                                await supabase
-                                                    .from("users")
-                                                    .upsert(
-                                                        {
-                                                            email: username?.email,
-                                                        },
-                                                        {
-                                                            onConflict: [
-                                                                "email",
-                                                            ],
-                                                        }
-                                                    )
-                                                    .select();
-
-                                            if (error) {
-                                                console.error(
-                                                    "Error pushing data:",
-                                                    error
-                                                );
-                                            } else {
-                                                console.log(
-                                                    "Data pushed successfully:",
-                                                    newRecord
-                                                );
-                                            }
-                                        }
-                                        pushDataToTable();
-                                    }}
-                                >
-                                    Magic
-                                </Button>
-                                <Button
-                                    color="inherit"
-                                    onClick={() => signOutUser()}
-                                >
-                                    Logout
-                                </Button>
+                                <Button>Account</Button>
+                                <Dropdown
+                                    ref={dropdownRef}
+                                    options={["Account", "Logout"]}
+                                    placeholder={username?.email}
+                                    onChange={handleSelect}
+                                />
                             </Toolbar>
                         </AppBar>
                     </Box>
@@ -371,40 +350,47 @@ function Success() {
                                 handleSubmitAnswer();
                             }}
                         >
-                            <TextField
-                                id="text-entry"
-                                hint="Enter your translation"
-                                style={{ width: "50%" }}
-                                disabled={awaitingGPT}
-                                onSubmit={(input) => {
-                                    console.log(
-                                        "Setting newSentenceReq to false."
-                                    );
-                                    isNewSentenceReq = false;
-                                    handleSend(
-                                        `Here is my translation:"${enteredText}"`
-                                    );
-                                    document.getElementById(
-                                        "user-answer"
-                                    ).innerText = `Your answer: ${enteredText}`;
-                                }}
-                                size="small"
-                                value={enteredText}
-                                onChange={handleTextChange}
-                            />
-                            <Button
-                                id="button-submit"
-                                variant="contained"
-                                color="primary"
-                                size="small"
-                                onClick={() => {
-                                    handleSubmitAnswer();
-                                }}
-                                disabled={awaitingGPT}
-                                style={{ height: "40px", marginLeft: "2px" }}
-                            >
-                                <SendIcon />
-                            </Button>
+                            <div className="input-container">
+                                <TextField
+                                    id="text-entry"
+                                    hint="Enter your translation"
+                                    style={{ width: "50%" }}
+                                    disabled={awaitingGPT}
+                                    onSubmit={(input) => {
+                                        console.log(
+                                            "Setting newSentenceReq to false."
+                                        );
+                                        isNewSentenceReq = false;
+                                        handleSend(
+                                            `Here is my translation:"${enteredText}"`
+                                        );
+                                        document.getElementById(
+                                            "user-answer"
+                                        ).innerText = `Your answer: ${enteredText}`;
+                                    }}
+                                    size="small"
+                                    value={enteredText}
+                                    onChange={handleTextChange}
+                                />
+
+                                <Button
+                                    id="button-submit"
+                                    variant="contained"
+                                    color="primary"
+                                    size="small"
+                                    onClick={() => {
+                                        handleSubmitAnswer();
+                                    }}
+                                    disabled={awaitingGPT}
+                                    style={{
+                                        height: "40px",
+                                        marginLeft: "2px",
+                                    }}
+                                >
+                                    <SendIcon />
+                                </Button>
+                                <h5>Tokens Remaining: 111</h5>
+                            </div>
                         </form>
                         <div style={{ marginTop: "4px" }}>
                             <Button
@@ -481,7 +467,7 @@ function Success() {
                     <p>Not permitted</p>
                 </>
             )}
-        </div>
+        </>
     );
 }
 
