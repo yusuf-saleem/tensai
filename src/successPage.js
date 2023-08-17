@@ -50,6 +50,7 @@ function Success() {
     const [isValidApiKey, setIsValidApiKey] = useState(false);
     const apiKeyEntryRef = useRef(null);
     const [username, setUsername] = useState({});
+    const [tokens, setTokens] = useState(0);
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
     const [enteredText, setEnteredText] = useState("");
@@ -81,6 +82,7 @@ function Success() {
             console.log("Oh no, you ran out of balance!");
         } else {
             balance--;
+            setTokens(balance)
             const { data, error } = await supabase
                 .from("users")
                 .update({ request_balance: balance })
@@ -118,7 +120,7 @@ function Success() {
         registerNewUser();
         testApiKey();
         getUserData();
-
+        getUserTokens();
         if (isValidApiKey) {
             handleSend(initPrompt);
         }
@@ -136,6 +138,15 @@ function Success() {
                 setUsername(value.data.user);
             }
         });
+    }
+
+    async function getUserTokens() {
+        const { data, error } = await supabase
+            .from("users")
+            .select("request_balance")
+            .eq("email", username?.email)
+            .single();
+        setTokens(data.request_balance);
     }
 
     async function processMessageToChatGPT(chatMessages) {
@@ -389,7 +400,7 @@ function Success() {
                                 >
                                     <SendIcon />
                                 </Button>
-                                <h5>Tokens Remaining: 111</h5>
+                                <h5>{"Tokens remaining: " + tokens}</h5>
                             </div>
                         </form>
                         <div style={{ marginTop: "4px" }}>
