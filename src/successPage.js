@@ -1,26 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
-import initPrompt from "./initPrompt.txt";
+// import initPrompt from "./initPrompt.txt";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
-import MenuIcon from "@mui/icons-material/Menu";
 import Button from "@mui/material/Button";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import IconButton from "@material-ui/core/IconButton";
-import { IoIosFlag } from "react-icons/io";
 import TextField from "@mui/material/TextField";
-import { textAlign } from "@mui/system";
 import SendIcon from "@mui/icons-material/Send";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Select from "@mui/material/Select";
-import OutlinedInput from "@mui/material/OutlinedInput";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
 import Dropdown from "react-dropdown";
 import "./dropdown.css";
 
@@ -34,71 +24,74 @@ const systemMessage = {
     content: "",
 };
 
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-    PaperProps: {
-        style: {
-            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-            width: 250,
-        },
-    },
-};
+const initPrompt = process.env.REACT_APP_INIT_PROMPT;
 
 function Success() {
-    const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
-    const [isValidApiKey, setIsValidApiKey] = useState(false);
-    const apiKeyEntryRef = useRef(null);
-    const [username, setUsername] = useState({});
-    const [tokens, setTokens] = useState(0);
     const navigate = useNavigate();
-    const [anchorEl, setAnchorEl] = useState(null);
+    const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
+    const [username, setUsername] = useState("");
+    const [tokens, setTokens] = useState(null);
+    const [lockUI, setLockUI] = useState(false);
+    const [isStarted, setStarted] = useState(false);
     const [enteredText, setEnteredText] = useState("");
-    const open = Boolean(anchorEl);
     const dropdownRef = useRef(null);
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
 
     const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
     const [currentSentence, setCurrentSentence] = useState("...");
     var isNewSentenceReq = true;
 
-    const handleSend = async (message) => {
-        // TODO: Ensure user is signed in
+    // Initial Page Load
+    useEffect(() => {
+        console.log("username:" + username);
+        getUserData();
+    }, []);
+
+    useEffect(() => {
+        if (tokens > 0) {
+            setLockUI(false);
+        } else {
+            setLockUI(true);
+        }
+    }, [tokens]);
+
+    async function pageInit() {}
+
+    async function getUserData() {
+        let email = "";
+
+        await supabase.auth.getUser().then((value) => {
+            if (value.data?.user) {
+                console.log("Got user:" + value.data.user.email);
+                email = value.data.user.email;
+                setUsername(value.data.user.email);
+            } else {
+                console.log("Failed to get user data.");
+            }
+        });
+
         const { data, error } = await supabase
             .from("users")
-            .select("request_balance")
-            .eq("email", username?.email)
+            .select("tokens")
+            .eq("email", email)
             .single();
-
-        var balance = data.request_balance;
-
-        if (balance <= 0) {
-            console.log("Oh no, you ran out of balance!");
+        if (error) {
+            console.log("Get user token error:");
+            console.log(error);
         } else {
-            balance--;
-            setTokens(balance)
-            const { data, error } = await supabase
-                .from("users")
-                .update({ request_balance: balance })
-                .eq("email", username?.email);
+            console.log("Got user token balance: " + data.tokens);
+            setTokens(data.tokens);
+        }
+    }
 
-            getLastMsgFromChatGPT();
-            if (initPrompt.includes(".txt")) {
-                await fetch(initPrompt)
-                    .then((r) => r.text())
-                    .then((text) => {
-                        initPrompt = text;
-                    });
-                message = initPrompt;
-            }
+    const handleSend = async (message) => {
 
-            console.log("Sending: ", message);
+        console.log();
+        if (tokens > 0) {
+
+            // 
+
+
             const newMessage = {
                 message,
                 direction: "outgoing",
@@ -108,23 +101,13 @@ function Success() {
             const newMessages = [...messages, newMessage];
 
             setMessages(newMessages);
-
-            // Initial system message to determine ChatGPT functionality
-            // How it responds, how it talks, etc.
             SetAwaitingGPT(true);
-            await processMessageToChatGPT(newMessages);
+            await processMessageToGPT(newMessages);
+        } else {
+            console.log("[handleSend]: No tokens remaining");
+            setLockUI(true);
         }
     };
-
-    useEffect(() => {
-        registerNewUser();
-        testApiKey();
-        getUserData();
-        getUserTokens();
-        if (isValidApiKey) {
-            handleSend(initPrompt);
-        }
-    }, [isValidApiKey]); // <-- empty dependency array
 
     async function registerNewUser() {
         const { error } = await supabase
@@ -132,24 +115,8 @@ function Success() {
             .insert({ email: username?.email });
     }
 
-    async function getUserData() {
-        await supabase.auth.getUser().then((value) => {
-            if (value.data?.user) {
-                setUsername(value.data.user);
-            }
-        });
-    }
-
-    async function getUserTokens() {
-        const { data, error } = await supabase
-            .from("users")
-            .select("request_balance")
-            .eq("email", username?.email)
-            .single();
-        setTokens(data.request_balance);
-    }
-
-    async function processMessageToChatGPT(chatMessages) {
+    async function processMessageToGPT(chatMessages) {
+        console.log("Sending to GPT:" + chatMessages);
         // messages is an array of messages
         // Format messages for chatGPT API
         // API is expecting objects in format of { role: "user" or "assistant", "content": "message here"}
@@ -268,37 +235,6 @@ function Success() {
         navigate("/");
     }
 
-    useEffect(() => {
-        if (apiKey !== "") {
-            testApiKey();
-        }
-    }, [apiKey]);
-
-    const testApiKey = async () => {
-        console.log("Checking key:" + apiKey);
-        try {
-            const response = await fetch("https://api.openai.com/v1/engines", {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${apiKey}`,
-                },
-            });
-            if (response.ok) {
-                // setIsValidApiKey(true);
-                console.log("API Key is valid");
-                setIsValidApiKey(true);
-            } else {
-                // setIsValidApiKey(false);
-                console.log("API Key is INVALID");
-                setIsValidApiKey(false);
-            }
-        } catch (error) {
-            // setIsValidApiKey(false);
-            console.log("Error validating API key");
-            setIsValidApiKey(false);
-        }
-    };
-
     const handleSelect = (selectedOption) => {
         console.log(`Selected option: ${selectedOption.value}`); // Logging the selected option's value
         if (selectedOption.value == "Logout") {
@@ -319,159 +255,166 @@ function Success() {
                                 }}
                             >
                                 <p color="inherit">MichigaenAI</p>
-                                {!isValidApiKey && (
-                                    <TextField
-                                        id="apiKeyEntry"
-                                        inputRef={apiKeyEntryRef}
-                                        variant="standard"
-                                        size="small"
-                                    ></TextField>
-                                )}
                                 <Box sx={{ flexGrow: 1 }} />
-                                {!isValidApiKey && (
-                                    <Button
-                                        color="inherit"
-                                        onClick={() => {
-                                            setApiKey(
-                                                apiKeyEntryRef.current.value
-                                            );
-                                        }}
-                                    >
-                                        Test API Key
-                                    </Button>
-                                )}
                                 <Button>Account</Button>
                                 <Dropdown
                                     ref={dropdownRef}
                                     options={["Account", "Logout"]}
-                                    placeholder={username?.email}
+                                    placeholder={username}
                                     onChange={handleSelect}
                                 />
                             </Toolbar>
                         </AppBar>
                     </Box>
-                    <div style={{ textAlign: "center" }}>
-                        <h3>Try to translate the following sentence::</h3>
-                        <h2 id="sentence" style={{ color: "grey" }}>
-                            {currentSentence}
-                        </h2>
-                        <form
-                            onSubmit={(event) => {
-                                event.preventDefault();
-                                handleSubmitAnswer();
-                            }}
-                        >
-                            <div className="input-container">
-                                <TextField
-                                    id="text-entry"
-                                    hint="Enter your translation"
-                                    style={{ width: "50%" }}
-                                    disabled={awaitingGPT}
-                                    onSubmit={(input) => {
-                                        console.log(
-                                            "Setting newSentenceReq to false."
-                                        );
-                                        isNewSentenceReq = false;
-                                        handleSend(
-                                            `Here is my translation:"${enteredText}"`
-                                        );
+                    {isStarted ? (
+                        <div style={{ textAlign: "center" }}>
+                            <h3>
+                                {tokens > 0
+                                    ? "Try to translate the following sentence:"
+                                    : "No tokens remaining!"}
+                            </h3>
+                            <h2 id="sentence" style={{ color: "grey" }}>
+                                {currentSentence}
+                            </h2>
+                            <form
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    handleSubmitAnswer();
+                                }}
+                            >
+                                <div className="input-container">
+                                    <TextField
+                                        id="text-entry"
+                                        hint="Enter your translation"
+                                        autoComplete="off"
+                                        style={{ width: "50%" }}
+                                        disabled={awaitingGPT}
+                                        onSubmit={(input) => {
+                                            console.log(
+                                                "Setting newSentenceReq to false."
+                                            );
+                                            isNewSentenceReq = false;
+                                            handleSend(
+                                                `Here is my translation:"${enteredText}"`
+                                            );
+                                            document.getElementById(
+                                                "user-answer"
+                                            ).innerText = `Your answer: ${enteredText}`;
+                                        }}
+                                        size="small"
+                                        value={enteredText}
+                                        onChange={handleTextChange}
+                                    />
+
+                                    <Button
+                                        id="button-submit"
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        onClick={() => {
+                                            handleSubmitAnswer();
+                                        }}
+                                        disabled={awaitingGPT || lockUI}
+                                        style={{
+                                            height: "40px",
+                                            marginLeft: "2px",
+                                        }}
+                                    >
+                                        <SendIcon />
+                                    </Button>
+                                    <h5>{"Tokens remaining: " + tokens}</h5>
+                                </div>
+                            </form>
+                            <div style={{ marginTop: "4px" }}>
+                                <Button
+                                    variant="contained"
+                                    style={{ marginRight: "4px" }}
+                                    disabled={awaitingGPT || lockUI}
+                                    onClick={() => {
+                                        isNewSentenceReq = true;
+                                        handleSend("Give me another one.");
                                         document.getElementById(
                                             "user-answer"
-                                        ).innerText = `Your answer: ${enteredText}`;
-                                    }}
-                                    size="small"
-                                    value={enteredText}
-                                    onChange={handleTextChange}
-                                />
-
-                                <Button
-                                    id="button-submit"
-                                    variant="contained"
-                                    color="primary"
-                                    size="small"
-                                    onClick={() => {
-                                        handleSubmitAnswer();
-                                    }}
-                                    disabled={awaitingGPT}
-                                    style={{
-                                        height: "40px",
-                                        marginLeft: "2px",
+                                        ).innerText = "";
+                                        document.getElementById(
+                                            "text-entry"
+                                        ).disabled = {
+                                            awaitingGPT,
+                                        };
+                                        document.getElementById(
+                                            "button-submit"
+                                        ).disabled = { awaitingGPT };
                                     }}
                                 >
-                                    <SendIcon />
+                                    Another
                                 </Button>
-                                <h5>{"Tokens remaining: " + tokens}</h5>
+                                <Button
+                                    variant="contained"
+                                    style={{ marginRight: "4px" }}
+                                    disabled={awaitingGPT || lockUI}
+                                    onClick={() => {
+                                        isNewSentenceReq = false;
+                                        handleSend(
+                                            "I give up. Please tell me the correct answer just this time."
+                                        );
+                                    }}
+                                >
+                                    Answer
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    style={{ marginRight: "4px" }}
+                                    disabled={awaitingGPT || lockUI}
+                                    onClick={() => {
+                                        isNewSentenceReq = false;
+                                        handleSend(
+                                            "Please give me the vocabulary just this time."
+                                        );
+                                    }}
+                                >
+                                    Vocab
+                                </Button>
                             </div>
-                        </form>
-                        <div style={{ marginTop: "4px" }}>
+
+                            <p
+                                id="user-answer"
+                                style={{
+                                    textAlign: "left",
+                                    paddingLeft: "6px",
+                                    marginTop: "0px",
+                                    maxWidth: "600px",
+                                }}
+                            ></p>
+                            <br></br>
+                            <span style={{ maxWidth: "600px" }}>
+                                {!awaitingGPT ? (
+                                    getLastMsgFromChatGPT()
+                                ) : (
+                                    <CircularProgress size={20} />
+                                )}
+                            </span>
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: "center" }}>
+                            <h3>
+                                {tokens > 0
+                                    ? ""
+                                    : "No tokens remaining!"}
+                            </h3>
                             <Button
                                 variant="contained"
                                 style={{ marginRight: "4px" }}
-                                disabled={awaitingGPT}
+                                disabled={awaitingGPT || lockUI}
                                 onClick={() => {
+                                    setStarted(true)
                                     isNewSentenceReq = true;
-                                    handleSend("Give me another one.");
-                                    document.getElementById(
-                                        "user-answer"
-                                    ).innerText = "";
-                                    document.getElementById(
-                                        "text-entry"
-                                    ).disabled = {
-                                        awaitingGPT,
-                                    };
-                                    document.getElementById(
-                                        "button-submit"
-                                    ).disabled = { awaitingGPT };
+                                    handleSend(initPrompt);
                                 }}
                             >
-                                Another
-                            </Button>
-                            <Button
-                                variant="contained"
-                                style={{ marginRight: "4px" }}
-                                disabled={awaitingGPT}
-                                onClick={() => {
-                                    isNewSentenceReq = false;
-                                    handleSend(
-                                        "I give up. Please tell me the correct answer just this time."
-                                    );
-                                }}
-                            >
-                                Answer
-                            </Button>
-                            <Button
-                                variant="contained"
-                                style={{ marginRight: "4px" }}
-                                disabled={awaitingGPT}
-                                onClick={() => {
-                                    isNewSentenceReq = false;
-                                    handleSend(
-                                        "Please give me the vocabulary just this time."
-                                    );
-                                }}
-                            >
-                                Vocab
+                                Begin
                             </Button>
                         </div>
-
-                        <p
-                            id="user-answer"
-                            style={{
-                                textAlign: "left",
-                                paddingLeft: "6px",
-                                marginTop: "0px",
-                                maxWidth: "600px",
-                            }}
-                        ></p>
-                        <br></br>
-                        <span style={{ maxWidth: "600px" }}>
-                            {!awaitingGPT ? (
-                                getLastMsgFromChatGPT()
-                            ) : (
-                                <CircularProgress size={20} />
-                            )}
-                        </span>
-                    </div>
+                    )}
                 </>
             ) : (
                 <>

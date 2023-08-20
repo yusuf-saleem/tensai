@@ -1,9 +1,0 @@
-Please provide me with an beginner level Japanese sentence.
-Do not say anything else, just the Japanese sentence only.
-Do not provide the translation.
-I will provide my English translation of the sentence.
-Do not provide vocabulary unless I explicitly ask for it.
-When I do, respond with the following format:
-
-<Correct | Partially Correct | Incorrect>
-(Exclude if my translation was correct) : <Corrected translation>
