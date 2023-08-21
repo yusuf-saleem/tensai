@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
-// import initPrompt from "./initPrompt.txt";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormControl from "@mui/material/FormControl";
+import FormLabel from "@mui/material/FormLabel";
 import TextField from "@mui/material/TextField";
 import SendIcon from "@mui/icons-material/Send";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -24,8 +28,6 @@ const systemMessage = {
     content: "",
 };
 
-const initPrompt = process.env.REACT_APP_INIT_PROMPT;
-
 function Success() {
     const navigate = useNavigate();
     const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
@@ -34,6 +36,7 @@ function Success() {
     const [lockUI, setLockUI] = useState(false);
     const [isStarted, setStarted] = useState(false);
     const [enteredText, setEnteredText] = useState("");
+    const [difficulty, setDifficulty] = useState("beginner");
     const dropdownRef = useRef(null);
 
     const [messages, setMessages] = useState([]);
@@ -85,12 +88,14 @@ function Success() {
     }
 
     const handleSend = async (message) => {
-
         console.log();
         if (tokens > 0) {
+            const { data, error } = await supabase
+                .from("users")
+                .update({ tokens: tokens - 1 })
+                .eq("email", username);
 
-            // 
-
+            setTokens(tokens - 1);
 
             const newMessage = {
                 message,
@@ -116,7 +121,8 @@ function Success() {
     }
 
     async function processMessageToGPT(chatMessages) {
-        console.log("Sending to GPT:" + chatMessages);
+        console.log("Sending to GPT:");
+        console.log(chatMessages[chatMessages.length-1].message);
         // messages is an array of messages
         // Format messages for chatGPT API
         // API is expecting objects in format of { role: "user" or "assistant", "content": "message here"}
@@ -240,6 +246,10 @@ function Success() {
         if (selectedOption.value == "Logout") {
             signOutUser();
         }
+    };
+
+    const handleChange = (event) => {
+        setDifficulty(event.target.value);
     };
 
     return (
@@ -396,17 +406,43 @@ function Success() {
                         </div>
                     ) : (
                         <div style={{ textAlign: "center" }}>
-                            <h3>
-                                {tokens > 0
-                                    ? ""
-                                    : "No tokens remaining!"}
-                            </h3>
+                            <h3>{tokens > 0 ? "" : "No tokens remaining!"}</h3>
+                            <FormControl component="fieldset">
+                                <FormLabel component="legend">
+                                    {"Choose difficulty: " + difficulty}
+                                </FormLabel>
+                                <RadioGroup
+                                    aria-label="options"
+                                    name="options"
+                                    value={difficulty}
+                                    onChange={handleChange}
+                                >
+                                    <FormControlLabel
+                                        value="beginner"
+                                        control={<Radio />}
+                                        label="Beginner"
+                                    />
+                                    <FormControlLabel
+                                        value="intermediate"
+                                        control={<Radio />}
+                                        label="Intermediate"
+                                    />
+                                    <FormControlLabel
+                                        value="advanced"
+                                        control={<Radio />}
+                                        label="Advanced"
+                                    />
+                                </RadioGroup>
+                            </FormControl>
+                            <br />
                             <Button
                                 variant="contained"
                                 style={{ marginRight: "4px" }}
                                 disabled={awaitingGPT || lockUI}
                                 onClick={() => {
-                                    setStarted(true)
+                                    let initPrompt = process.env.REACT_APP_INIT_PROMPT;
+                                    initPrompt = initPrompt.replace("beginner", difficulty);
+                                    setStarted(true);
                                     isNewSentenceReq = true;
                                     handleSend(initPrompt);
                                 }}
