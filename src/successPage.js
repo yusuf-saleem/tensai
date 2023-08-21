@@ -53,7 +53,7 @@ function Success() {
     useEffect(() => {
         registerNewUser();
     }, [username]);
-    
+
     useEffect(() => {
         if (tokens > 0) {
             setLockUI(false);
@@ -126,7 +126,7 @@ function Success() {
 
     async function processMessageToGPT(chatMessages) {
         console.log("Sending to GPT:");
-        console.log(chatMessages[chatMessages.length-1].message);
+        console.log(chatMessages[chatMessages.length - 1].message);
         // messages is an array of messages
         // Format messages for chatGPT API
         // API is expecting objects in format of { role: "user" or "assistant", "content": "message here"}
@@ -444,8 +444,12 @@ function Success() {
                                 style={{ marginRight: "4px" }}
                                 disabled={awaitingGPT || lockUI}
                                 onClick={() => {
-                                    let initPrompt = process.env.REACT_APP_INIT_PROMPT;
-                                    initPrompt = initPrompt.replace("beginner", difficulty);
+                                    let initPrompt =
+                                        process.env.REACT_APP_INIT_PROMPT;
+                                    initPrompt = initPrompt.replace(
+                                        "beginner",
+                                        difficulty
+                                    );
                                     setStarted(true);
                                     isNewSentenceReq = true;
                                     handleSend(initPrompt);
@@ -458,7 +462,10 @@ function Success() {
                 </>
             ) : (
                 <>
-                    <p>Not permitted</p>
+                    <div style={{ textAlign: "center" }}>
+                        <h1>Not Permitted</h1>
+                        <button onClick={() => {navigate("/")}}>Return</button>
+                    </div>
                 </>
             )}
         </>
