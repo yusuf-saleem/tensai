@@ -47,10 +47,13 @@ function Success() {
     // Initial Page Load
     useEffect(() => {
         console.log("username:" + username);
-        registerNewUser();
         getUserData();
     }, []);
 
+    useEffect(() => {
+        registerNewUser();
+    }, [username]);
+    
     useEffect(() => {
         if (tokens > 0) {
             setLockUI(false);
