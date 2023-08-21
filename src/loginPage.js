@@ -45,6 +45,6 @@ export default function App() {
             </div>
         );
     } else {
-        navigate("/practice");
+        navigate("/dashboard");
     }
 }

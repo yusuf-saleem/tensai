@@ -9,7 +9,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/test" element={<h1>Test Route</h1>} />
-                <Route path="/practice" element={<Success/>} />
+                <Route path="/dashboard" element={<Success/>} />
                 <Route path="/*" element={<Navigate to="" replace />} />
             </Routes>
         </Router>
