@@ -47,6 +47,7 @@ function Success() {
     // Initial Page Load
     useEffect(() => {
         console.log("username:" + username);
+        registerNewUser();
         getUserData();
     }, []);
 
