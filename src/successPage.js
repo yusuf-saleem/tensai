@@ -118,7 +118,7 @@ function Success() {
     async function registerNewUser() {
         const { error } = await supabase
             .from("users")
-            .insert({ email: username?.email });
+            .insert({ email: username });
     }
 
     async function processMessageToGPT(chatMessages) {
