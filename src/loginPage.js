@@ -32,7 +32,7 @@ export default function App() {
         return (
             <div className="App">
                 <header className="App-header">
-                    <h1>MachigaenAI</h1>
+                    <h1>langAI</h1>
                     <p>Please Log In</p>
                     <Auth
                         supabaseClient={supabase}

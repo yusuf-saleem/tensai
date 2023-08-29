@@ -5,13 +5,11 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import TextField from "@mui/material/TextField";
 import SendIcon from "@mui/icons-material/Send";
+import LogoutIcon from "@mui/icons-material/Logout";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
@@ -25,7 +23,8 @@ const supabase = createClient(
 
 const systemMessage = {
     role: "system",
-    content: "",
+    content:
+        'Provide a sentence in the language and difficulty that is requested by the user. Your response must be only 1 single sentence that is only in the language requested. When the user provides their translation of the sentence, you responde with either "Correct" or "Incorrect". Provide the answer or vocabulary only when requested.',
 };
 
 function Success() {
@@ -35,7 +34,9 @@ function Success() {
     const [tokens, setTokens] = useState(null);
     const [lockUI, setLockUI] = useState(false);
     const [isStarted, setStarted] = useState(false);
+    const [turnOver, setTurnOver] = useState(false);
     const [enteredText, setEnteredText] = useState("");
+    const [language, setLanguage] = useState("Japanese");
     const [difficulty, setDifficulty] = useState("beginner");
     const dropdownRef = useRef(null);
 
@@ -92,13 +93,12 @@ function Success() {
     }
 
     const handleSend = async (message) => {
-        console.log();
         if (tokens > 0) {
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from("users")
                 .update({ tokens: tokens - 1 })
                 .eq("email", username);
-
+            if (error) console.log(error);
             setTokens(tokens - 1);
 
             const newMessage = {
@@ -125,12 +125,9 @@ function Success() {
     }
 
     async function processMessageToGPT(chatMessages) {
-        console.log("Sending to GPT:");
-        console.log(chatMessages[chatMessages.length - 1].message);
-        // messages is an array of messages
-        // Format messages for chatGPT API
-        // API is expecting objects in format of { role: "user" or "assistant", "content": "message here"}
-        // So we need to reformat
+        console.log(
+            "Sending to GPT: " + chatMessages[chatMessages.length - 1].message
+        );
 
         let apiMessages = chatMessages.map((messageObject) => {
             let role = "";
@@ -176,9 +173,10 @@ function Success() {
 
                 if (isNewSentenceReq) {
                     console.log("New sentence received!");
-                    setCurrentSentence(
-                        getJapanese(data.choices[0].message.content)
-                    );
+                    // setCurrentSentence(
+                    //     getJapanese(data.choices[0].message.content)
+                    // );
+                    setCurrentSentence(data.choices[0].message.content);
                 }
                 SetAwaitingGPT(false);
                 isNewSentenceReq = true;
@@ -235,26 +233,50 @@ function Success() {
         document.getElementById(
             "user-answer"
         ).innerText = `Your answer: ${enteredText}`;
-        setEnteredText("");
+        // setEnteredText("");
         document.getElementById("text-entry").disabled = true;
         document.getElementById("button-submit").disabled = true;
     };
 
     async function signOutUser() {
         const { error } = await supabase.auth.signOut();
+        if (error) console.log(error);
         navigate("/");
     }
 
-    const handleSelect = (selectedOption) => {
-        console.log(`Selected option: ${selectedOption.value}`); // Logging the selected option's value
-        if (selectedOption.value == "Logout") {
-            signOutUser();
-        }
+    const handleSelectLanguage = (selectedOption) => {
+        console.log(`Selected language: ${selectedOption.value}`);
+        setLanguage(selectedOption.value);
+    };
+
+    const handleSelectDifficulty = (selectedOption) => {
+        console.log(`Selected difficulty: ${selectedOption.value}`);
+        setDifficulty(selectedOption.value);
     };
 
     const handleChange = (event) => {
         setDifficulty(event.target.value);
     };
+
+    function containsFeedback() {
+        const str = getLastMsgFromChatGPT().toLowerCase();
+        const keywords = ["correct", "partially", "perfect", " - "];
+        for (const keyword of keywords) {
+            if (str.includes(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function getLastUserMessage() {
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].sender === "user") {
+                return messages[i];
+            }
+        }
+        return null; // No user message found
+    }
 
     return (
         <>
@@ -268,14 +290,14 @@ function Success() {
                                     backgroundColor: "initial",
                                 }}
                             >
-                                <p color="inherit">MichigaenAI</p>
+                                <h3 color="inherit">langAI</h3>
                                 <Box sx={{ flexGrow: 1 }} />
-                                <Button>Account</Button>
-                                <Dropdown
-                                    ref={dropdownRef}
-                                    options={["Account", "Logout"]}
-                                    placeholder={username}
-                                    onChange={handleSelect}
+                                <h3>{username}</h3>
+                                <LogoutIcon
+                                    style={{ marginLeft: "10px", cursor: 'pointer' }}
+                                    onClick={() => {
+                                        signOutUser();
+                                    }}
                                 />
                             </Toolbar>
                         </AppBar>
@@ -287,8 +309,12 @@ function Success() {
                                     ? "Try to translate the following sentence:"
                                     : "No tokens remaining!"}
                             </h3>
-                            <h2 id="sentence" style={{ color: "grey" }}>
-                                {currentSentence}
+                            <h2 id="sentence">
+                                {!awaitingGPT ? (
+                                    currentSentence
+                                ) : (
+                                    <CircularProgress size={20} />
+                                )}
                             </h2>
                             <form
                                 onSubmit={(event) => {
@@ -296,13 +322,15 @@ function Success() {
                                     handleSubmitAnswer();
                                 }}
                             >
-                                <div className="input-container">
+                                <div>
                                     <TextField
                                         id="text-entry"
                                         hint="Enter your translation"
                                         autoComplete="off"
-                                        style={{ width: "50%" }}
-                                        disabled={awaitingGPT}
+                                        style={{
+                                            width: "50%",
+                                        }}
+                                        disabled={awaitingGPT || turnOver}
                                         onSubmit={(input) => {
                                             console.log(
                                                 "Setting newSentenceReq to false."
@@ -326,9 +354,12 @@ function Success() {
                                         color="primary"
                                         size="small"
                                         onClick={() => {
+                                            setTurnOver(true);
                                             handleSubmitAnswer();
                                         }}
-                                        disabled={awaitingGPT || lockUI}
+                                        disabled={
+                                            awaitingGPT || lockUI || turnOver
+                                        }
                                         style={{
                                             height: "40px",
                                             marginLeft: "2px",
@@ -345,6 +376,8 @@ function Success() {
                                     style={{ marginRight: "4px" }}
                                     disabled={awaitingGPT || lockUI}
                                     onClick={() => {
+                                        setTurnOver(false);
+                                        setEnteredText("");
                                         isNewSentenceReq = true;
                                         handleSend("Give me another one.");
                                         document.getElementById(
@@ -368,6 +401,7 @@ function Success() {
                                     disabled={awaitingGPT || lockUI}
                                     onClick={() => {
                                         isNewSentenceReq = false;
+                                        setTurnOver(true);
                                         handleSend(
                                             "I give up. Please tell me the correct answer just this time."
                                         );
@@ -389,54 +423,49 @@ function Success() {
                                     Vocab
                                 </Button>
                             </div>
-
-                            <p
-                                id="user-answer"
-                                style={{
-                                    textAlign: "left",
-                                    paddingLeft: "6px",
-                                    marginTop: "0px",
-                                    maxWidth: "600px",
-                                }}
-                            ></p>
                             <br></br>
                             <span style={{ maxWidth: "600px" }}>
-                                {!awaitingGPT ? (
-                                    getLastMsgFromChatGPT()
-                                ) : (
-                                    <CircularProgress size={20} />
-                                )}
+                                {containsFeedback()
+                                    ? getLastMsgFromChatGPT()
+                                    : ""}
                             </span>
                         </div>
                     ) : (
                         <div style={{ textAlign: "center" }}>
                             <h3>{tokens > 0 ? "" : "No tokens remaining!"}</h3>
                             <FormControl component="fieldset">
-                                <FormLabel component="legend">
-                                    {"Choose difficulty: " + difficulty}
-                                </FormLabel>
-                                <RadioGroup
-                                    aria-label="options"
-                                    name="options"
-                                    value={difficulty}
-                                    onChange={handleChange}
+                                <FormLabel
+                                    component="legend"
+                                    style={{ color: "black" }}
                                 >
-                                    <FormControlLabel
-                                        value="beginner"
-                                        control={<Radio />}
-                                        label="Beginner"
-                                    />
-                                    <FormControlLabel
-                                        value="intermediate"
-                                        control={<Radio />}
-                                        label="Intermediate"
-                                    />
-                                    <FormControlLabel
-                                        value="advanced"
-                                        control={<Radio />}
-                                        label="Advanced"
-                                    />
-                                </RadioGroup>
+                                    Choose language:
+                                </FormLabel>
+                                <Dropdown
+                                    className="poopers"
+                                    options={[
+                                        "Japanese",
+                                        "Chinese",
+                                        "Urdu",
+                                        "French",
+                                    ]}
+                                    placeholder={"Select Language"}
+                                    onChange={handleSelectLanguage}
+                                />
+                                <FormLabel
+                                    component="legend"
+                                    style={{ color: "black" }}
+                                >
+                                    Choose difficulty:
+                                </FormLabel>
+                                <Dropdown
+                                    options={[
+                                        "Beginner",
+                                        "Intermediate",
+                                        "Advanced",
+                                    ]}
+                                    placeholder={"Beginner"}
+                                    onChange={handleSelectDifficulty}
+                                />
                             </FormControl>
                             <br />
                             <Button
@@ -445,10 +474,14 @@ function Success() {
                                 disabled={awaitingGPT || lockUI}
                                 onClick={() => {
                                     let initPrompt =
-                                        process.env.REACT_APP_INIT_PROMPT;
+                                        "Please provide me a beginner level Japanese sentence.";
                                     initPrompt = initPrompt.replace(
                                         "beginner",
                                         difficulty
+                                    );
+                                    initPrompt = initPrompt.replace(
+                                        "Japanese",
+                                        language
                                     );
                                     setStarted(true);
                                     isNewSentenceReq = true;
@@ -464,7 +497,13 @@ function Success() {
                 <>
                     <div style={{ textAlign: "center" }}>
                         <h1>Not Permitted</h1>
-                        <button onClick={() => {navigate("/")}}>Return</button>
+                        <button
+                            onClick={() => {
+                                navigate("/");
+                            }}
+                        >
+                            Return
+                        </button>
                     </div>
                 </>
             )}
