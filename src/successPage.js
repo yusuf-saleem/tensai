@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
-import AppBar from "@mui/material/AppBar";
+import SubmitField from "./submitField";
+
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
-import TextField from "@mui/material/TextField";
-import SendIcon from "@mui/icons-material/Send";
-import LogoutIcon from "@mui/icons-material/Logout";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Dropdown from "react-dropdown";
@@ -35,25 +34,19 @@ function Success() {
     const [lockUI, setLockUI] = useState(false);
     const [isStarted, setStarted] = useState(false);
     const [turnOver, setTurnOver] = useState(false);
+    const [result, setResult] = useState("");
     const [enteredText, setEnteredText] = useState("");
     const [language, setLanguage] = useState("Japanese");
     const [difficulty, setDifficulty] = useState("beginner");
-    const dropdownRef = useRef(null);
 
     const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
     const [currentSentence, setCurrentSentence] = useState("...");
     var isNewSentenceReq = true;
 
-    // Initial Page Load
     useEffect(() => {
-        console.log("username:" + username);
         getUserData();
     }, []);
-
-    useEffect(() => {
-        registerNewUser();
-    }, [username]);
 
     useEffect(() => {
         if (tokens > 0) {
@@ -73,6 +66,7 @@ function Success() {
                 console.log("Got user:" + value.data.user.email);
                 email = value.data.user.email;
                 setUsername(value.data.user.email);
+                registerNewUser(value.data.user.email);
             } else {
                 console.log("Failed to get user data.");
             }
@@ -119,9 +113,11 @@ function Success() {
     };
 
     async function registerNewUser() {
-        const { error } = await supabase
-            .from("users")
-            .insert({ email: username });
+        if (username != "") {
+            const { error } = await supabase
+                .from("users")
+                .insert({ email: username });
+        }
     }
 
     async function processMessageToGPT(chatMessages) {
@@ -139,9 +135,6 @@ function Success() {
             return { role: role, content: messageObject.message };
         });
 
-        // Get the request body set up with the model we plan to use
-        // and the messages which we formatted above. We add a system message in the front to'
-        // determine how we want chatGPT to act.
         const apiRequestBody = {
             model: "gpt-3.5-turbo",
             messages: [
@@ -170,12 +163,22 @@ function Success() {
                     },
                 ]);
                 console.log("Received:", data.choices[0].message.content);
-
+                if (containsFeedback(data.choices[0].message.content)) {
+                    const feedback =
+                        data.choices[0].message.content.toLowerCase();
+                    if (feedback.includes("incorrect")) {
+                        setResult("incorrect");
+                    } else if (feedback.includes("correct")) {
+                        setResult("correct");
+                    } else {
+                        console.log(
+                            "wasn't able to determine the result because of weird response:" +
+                                feedback
+                        );
+                    }
+                }
                 if (isNewSentenceReq) {
                     console.log("New sentence received!");
-                    // setCurrentSentence(
-                    //     getJapanese(data.choices[0].message.content)
-                    // );
                     setCurrentSentence(data.choices[0].message.content);
                 }
                 SetAwaitingGPT(false);
@@ -230,10 +233,7 @@ function Success() {
         console.log("Setting newSentenceReq to false.");
         isNewSentenceReq = false;
         handleSend(`Here is my translation:"${enteredText}"`);
-        document.getElementById(
-            "user-answer"
-        ).innerText = `Your answer: ${enteredText}`;
-        // setEnteredText("");
+
         document.getElementById("text-entry").disabled = true;
         document.getElementById("button-submit").disabled = true;
     };
@@ -258,11 +258,11 @@ function Success() {
         setDifficulty(event.target.value);
     };
 
-    function containsFeedback() {
-        const str = getLastMsgFromChatGPT().toLowerCase();
+    function containsFeedback(str) {
+        const feedbackText = str.toLowerCase();
         const keywords = ["correct", "partially", "perfect", " - "];
         for (const keyword of keywords) {
-            if (str.includes(keyword)) {
+            if (feedbackText.includes(keyword)) {
                 return true;
             }
         }
@@ -275,7 +275,7 @@ function Success() {
                 return messages[i];
             }
         }
-        return null; // No user message found
+        return null;
     }
 
     return (
@@ -283,37 +283,32 @@ function Success() {
             {Object.keys(username).length !== 0 ? (
                 <>
                     <Box sx={{ flexGrow: 1 }}>
-                        <AppBar position="static">
-                            <Toolbar
-                                sx={{ flexGrow: 1 }}
-                                style={{
-                                    backgroundColor: "initial",
-                                }}
-                            >
-                                <h3 color="inherit">langAI</h3>
-                                <Box sx={{ flexGrow: 1 }} />
-                                <h3>{username}</h3>
-                                <LogoutIcon
-                                    style={{ marginLeft: "10px", cursor: 'pointer' }}
-                                    onClick={() => {
-                                        signOutUser();
-                                    }}
-                                />
-                            </Toolbar>
-                        </AppBar>
+                        <Toolbar
+                            sx={{ flexGrow: 1 }}
+                            style={{
+                                backgroundColor: "initial",
+                                marginBottom: "40px",
+                            }}
+                        >
+                            <h2 color="inherit">LANG•AI</h2>
+                            <Box sx={{ flexGrow: 1 }} />
+                            <AccountCircleIcon
+                                style={{ fontSize: "48px" }}
+                                onClick={() => {}}
+                            />
+                        </Toolbar>
                     </Box>
                     {isStarted ? (
-                        <div style={{ textAlign: "center" }}>
-                            <h3>
-                                {tokens > 0
-                                    ? "Try to translate the following sentence:"
-                                    : "No tokens remaining!"}
-                            </h3>
+                        <div
+                            style={{
+                                textAlign: "center",
+                            }}
+                        >
                             <h2 id="sentence">
-                                {!awaitingGPT ? (
+                                {!awaitingGPT || turnOver ? (
                                     currentSentence
                                 ) : (
-                                    <CircularProgress size={20} />
+                                    <CircularProgress size={30} />
                                 )}
                             </h2>
                             <form
@@ -321,114 +316,28 @@ function Success() {
                                     event.preventDefault();
                                     handleSubmitAnswer();
                                 }}
-                            >
-                                <div>
-                                    <TextField
-                                        id="text-entry"
-                                        hint="Enter your translation"
-                                        autoComplete="off"
-                                        style={{
-                                            width: "50%",
-                                        }}
-                                        disabled={awaitingGPT || turnOver}
-                                        onSubmit={(input) => {
-                                            console.log(
-                                                "Setting newSentenceReq to false."
-                                            );
-                                            isNewSentenceReq = false;
-                                            handleSend(
-                                                `Here is my translation:"${enteredText}"`
-                                            );
-                                            document.getElementById(
-                                                "user-answer"
-                                            ).innerText = `Your answer: ${enteredText}`;
-                                        }}
-                                        size="small"
-                                        value={enteredText}
-                                        onChange={handleTextChange}
-                                    />
-
-                                    <Button
-                                        id="button-submit"
-                                        variant="contained"
-                                        color="primary"
-                                        size="small"
-                                        onClick={() => {
-                                            setTurnOver(true);
-                                            handleSubmitAnswer();
-                                        }}
-                                        disabled={
-                                            awaitingGPT || lockUI || turnOver
-                                        }
-                                        style={{
-                                            height: "40px",
-                                            marginLeft: "2px",
-                                        }}
-                                    >
-                                        <SendIcon />
-                                    </Button>
-                                    <h5>{"Tokens remaining: " + tokens}</h5>
-                                </div>
-                            </form>
-                            <div style={{ marginTop: "4px" }}>
-                                <Button
-                                    variant="contained"
-                                    style={{ marginRight: "4px" }}
-                                    disabled={awaitingGPT || lockUI}
-                                    onClick={() => {
+                            ></form>
+                            <SubmitField
+                                enteredText={enteredText}
+                                onTextChange={handleTextChange}
+                                disabled={awaitingGPT || turnOver}
+                                result={result}
+                                onSendIconClick={() => {
+                                    if (turnOver) {
                                         setTurnOver(false);
                                         setEnteredText("");
+                                        setResult("");
                                         isNewSentenceReq = true;
-                                        handleSend("Give me another one.");
-                                        document.getElementById(
-                                            "user-answer"
-                                        ).innerText = "";
-                                        document.getElementById(
-                                            "text-entry"
-                                        ).disabled = {
-                                            awaitingGPT,
-                                        };
-                                        document.getElementById(
-                                            "button-submit"
-                                        ).disabled = { awaitingGPT };
-                                    }}
-                                >
-                                    Another
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    style={{ marginRight: "4px" }}
-                                    disabled={awaitingGPT || lockUI}
-                                    onClick={() => {
+                                        handleSend(`Give me another ${difficulty} level one.`);
+                                    } else {
                                         isNewSentenceReq = false;
                                         setTurnOver(true);
                                         handleSend(
-                                            "I give up. Please tell me the correct answer just this time."
+                                            `Here is my translation:"${enteredText}"`
                                         );
-                                    }}
-                                >
-                                    Answer
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    style={{ marginRight: "4px" }}
-                                    disabled={awaitingGPT || lockUI}
-                                    onClick={() => {
-                                        isNewSentenceReq = false;
-                                        handleSend(
-                                            "Please give me the vocabulary just this time."
-                                        );
-                                    }}
-                                >
-                                    Vocab
-                                </Button>
-                            </div>
-                            <br></br>
-                            <span style={{ maxWidth: "600px" }}>
-                                {containsFeedback()
-                                    ? getLastMsgFromChatGPT()
-                                    : ""}
-                            </span>
+                                    }
+                                }}
+                            />
                         </div>
                     ) : (
                         <div style={{ textAlign: "center" }}>
