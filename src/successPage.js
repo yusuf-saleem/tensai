@@ -294,7 +294,9 @@ function Success() {
                             <Box sx={{ flexGrow: 1 }} />
                             <AccountCircleIcon
                                 style={{ fontSize: "48px" }}
-                                onClick={() => {}}
+                                onClick={() => {
+                                    signOutUser();
+                                }}
                             />
                         </Toolbar>
                     </Box>
