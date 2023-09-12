@@ -10,6 +10,11 @@ import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { ReactCountryFlag } from 'react-country-flag';
+import Rating from '@mui/material/Rating';
+import { Carousel } from 'react-responsive-carousel';
+import 'react-responsive-carousel/lib/styles/carousel.min.css'; // Import CSS for styling
+
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Dropdown from "react-dropdown";
@@ -26,8 +31,13 @@ const systemMessage = {
         'Provide a sentence in the language and difficulty that is requested by the user. Your response must be only 1 single sentence that is only in the language requested. When the user provides their translation of the sentence, you responde with either "Correct" or "Incorrect". Provide the answer or vocabulary only when requested.',
 };
 
+
+
 function Success() {
     const navigate = useNavigate();
+    const countryCodes = ['JP', 'CN', 'FR', 'PK'];
+    const languages = ["japanese", "chinese", "french", "urdu"]
+    const [selectedCountryIndex, setSelectedCountryIndex] = useState(0);
     const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
     const [username, setUsername] = useState("");
     const [tokens, setTokens] = useState(null);
@@ -56,7 +66,7 @@ function Success() {
         }
     }, [tokens]);
 
-    async function pageInit() {}
+    async function pageInit() { }
 
     async function getUserData() {
         let email = "";
@@ -173,7 +183,7 @@ function Success() {
                     } else {
                         console.log(
                             "wasn't able to determine the result because of weird response:" +
-                                feedback
+                            feedback
                         );
                     }
                 }
@@ -254,9 +264,27 @@ function Success() {
         setDifficulty(selectedOption.value);
     };
 
-    const handleChange = (event) => {
-        setDifficulty(event.target.value);
+    const handleDifficultyChange = (event, newValue) => {
+        switch (newValue) {
+            case 1:
+                setDifficulty("beginner");
+                break;
+            case 2:
+                setDifficulty("intermediate");
+                break;
+            case 3:
+                setDifficulty("advanced");
+                break;
+            default:
+                setDifficulty("beginner");
+                break;
+        }
+
     };
+
+    const handleLanguageChange = (index) => {
+        setLanguage(languages[index]);
+    }
 
     function containsFeedback(str) {
         const feedbackText = str.toLowerCase();
@@ -298,6 +326,7 @@ function Success() {
                                     signOutUser();
                                 }}
                             />
+
                         </Toolbar>
                     </Box>
                     {isStarted ? (
@@ -342,66 +371,78 @@ function Success() {
                             />
                         </div>
                     ) : (
-                        <div style={{ textAlign: "center" }}>
+                        <><div style={{ display: "flex", justifyContent: "center" }}>
                             <h3>{tokens > 0 ? "" : "No tokens remaining!"}</h3>
-                            <FormControl component="fieldset">
-                                <FormLabel
-                                    component="legend"
-                                    style={{ color: "black" }}
+                            <Box display="flex" justifyContent="center"
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}>
+                                <h4>Learning</h4>
+                                <Carousel
+                                    showArrows={true}
+                                    showThumbs={false}
+                                    showStatus={false}
+                                    showIndicators={false}
+                                    infiniteLoop={true}
+                                    onChange={handleLanguageChange}
+                                    style={{
+                                        innerHeight: "500px",
+                                        innerWidth: "500px",
+                                        '&.control-next': {
+                                            color: 'red',
+                                        }
+                                    }}
                                 >
-                                    Choose language:
-                                </FormLabel>
-                                <Dropdown
-                                    className="poopers"
-                                    options={[
-                                        "Japanese",
-                                        "Chinese",
-                                        "Urdu",
-                                        "French",
-                                    ]}
-                                    placeholder={"Select Language"}
-                                    onChange={handleSelectLanguage}
-                                />
-                                <FormLabel
-                                    component="legend"
-                                    style={{ color: "black" }}
+
+                                    {countryCodes.map((countryCode, index) => (
+                                        <div key={countryCode}>
+                                            <ReactCountryFlag
+                                                countryCode={countryCode}
+                                                svg
+                                                style={{ height: '50px', width: 'auto' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </Carousel>
+                                <h4>Difficulty</h4>
+                                <Rating
+                                    max={3}
+                                    onChange={handleDifficultyChange}
+                                    style={{ color: "#3F72AF" }} />
+                                <Button
+                                    variant="contained"
+                                    style={{ color: "black", backgroundColor: "#F9F7F7", marginTop: "10px" }}
+                                    disabled={awaitingGPT || lockUI}
+                                    onClick={() => {
+                                        let initPrompt =
+                                            "Please provide me a beginner level Japanese sentence.";
+                                        initPrompt = initPrompt.replace(
+                                            "beginner",
+                                            difficulty
+                                        );
+                                        initPrompt = initPrompt.replace(
+                                            "Japanese",
+                                            language
+                                        );
+                                        setStarted(true);
+                                        isNewSentenceReq = true;
+                                        handleSend(initPrompt);
+                                    }}
                                 >
-                                    Choose difficulty:
-                                </FormLabel>
-                                <Dropdown
-                                    options={[
-                                        "Beginner",
-                                        "Intermediate",
-                                        "Advanced",
-                                    ]}
-                                    placeholder={"Beginner"}
-                                    onChange={handleSelectDifficulty}
-                                />
-                            </FormControl>
-                            <br />
-                            <Button
-                                variant="contained"
-                                style={{ marginRight: "4px" }}
-                                disabled={awaitingGPT || lockUI}
-                                onClick={() => {
-                                    let initPrompt =
-                                        "Please provide me a beginner level Japanese sentence.";
-                                    initPrompt = initPrompt.replace(
-                                        "beginner",
-                                        difficulty
-                                    );
-                                    initPrompt = initPrompt.replace(
-                                        "Japanese",
-                                        language
-                                    );
-                                    setStarted(true);
-                                    isNewSentenceReq = true;
-                                    handleSend(initPrompt);
-                                }}
-                            >
-                                Begin
-                            </Button>
+                                    Begin
+                                </Button>
+                            </Box>
+
+
+
                         </div>
+
+                        </>
+
+
                     )}
                 </>
             ) : (
