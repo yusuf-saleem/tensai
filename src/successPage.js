@@ -2,23 +2,20 @@ import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import SubmitField from "./submitField";
-
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
-import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
+import Dropdown from "react-dropdown-select";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import { ReactCountryFlag } from 'react-country-flag';
 import Rating from '@mui/material/Rating';
-import { Carousel } from 'react-responsive-carousel';
+import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import 'react-responsive-carousel/lib/styles/carousel.min.css'; // Import CSS for styling
 
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
-import Dropdown from "react-dropdown";
 import "./dropdown.css";
+import { IndeterminateCheckBox } from "@mui/icons-material";
 
 const supabase = createClient(
     "https://dsrgrtdunqtylmafczpg.supabase.co",
@@ -35,8 +32,7 @@ const systemMessage = {
 
 function Success() {
     const navigate = useNavigate();
-    const countryCodes = ['JP', 'CN', 'FR', 'PK'];
-    const languages = ["japanese", "chinese", "french", "urdu"]
+    const languages = ["Japanese", "Chinese", "French", "Urdu"]
     const [selectedCountryIndex, setSelectedCountryIndex] = useState(0);
     const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
     const [username, setUsername] = useState("");
@@ -254,11 +250,6 @@ function Success() {
         navigate("/");
     }
 
-    const handleSelectLanguage = (selectedOption) => {
-        console.log(`Selected language: ${selectedOption.value}`);
-        setLanguage(selectedOption.value);
-    };
-
     const handleSelectDifficulty = (selectedOption) => {
         console.log(`Selected difficulty: ${selectedOption.value}`);
         setDifficulty(selectedOption.value);
@@ -282,8 +273,9 @@ function Success() {
 
     };
 
-    const handleLanguageChange = (index) => {
-        setLanguage(languages[index]);
+    const handleLanguageChange = (e) => {
+        console.log(e.target.value);
+        setLanguage(e.target.value);
     }
 
     function containsFeedback(str) {
@@ -373,40 +365,28 @@ function Success() {
                     ) : (
                         <><div style={{ display: "flex", justifyContent: "center" }}>
                             <h3>{tokens > 0 ? "" : "No tokens remaining!"}</h3>
-                            <Box display="flex" justifyContent="center"
+                            <Box
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
+                                    width: '200px'                        
                                 }}>
                                 <h4>Learning</h4>
-                                <Carousel
-                                    showArrows={true}
-                                    showThumbs={false}
-                                    showStatus={false}
-                                    showIndicators={false}
-                                    infiniteLoop={true}
-                                    onChange={handleLanguageChange}
-                                    style={{
-                                        innerHeight: "500px",
-                                        innerWidth: "500px",
-                                        '&.control-next': {
-                                            color: 'red',
-                                        }
-                                    }}
-                                >
-
-                                    {countryCodes.map((countryCode, index) => (
-                                        <div key={countryCode}>
-                                            <ReactCountryFlag
-                                                countryCode={countryCode}
-                                                svg
-                                                style={{ height: '50px', width: 'auto' }}
-                                            />
-                                        </div>
-                                    ))}
-                                </Carousel>
+                                <FormControl fullWidth>
+                                    <InputLabel id="demo-simple-select-label">Language</InputLabel>
+                                    <Select
+                                        labelId="demo-simple-select-label"
+                                        id="demo-simple-select"
+                                        label="Language"
+                                        defaultValue=""
+                                        onChange={handleLanguageChange}
+                                    >
+                                        {languages.map((lang, index) => (
+                                            <MenuItem key={index} value={lang}>{lang}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
                                 <h4>Difficulty</h4>
                                 <Rating
                                     max={3}
