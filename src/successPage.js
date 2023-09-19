@@ -2,20 +2,25 @@ import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import SubmitField from "./submitField";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import Button from "@mui/material/Button";
-import Dropdown from "react-dropdown-select";
+import {
+    Box,
+    Button,
+    FormControl,
+    IconButton,
+    InputLabel,
+    MenuItem,
+    Popover,
+    Paper,
+    Rating,
+    Select,
+    Toolbar,
+    Typography,
+} from "@mui/material";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import Rating from '@mui/material/Rating';
-import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
-import 'react-responsive-carousel/lib/styles/carousel.min.css'; // Import CSS for styling
-
+import Fab from "@material-ui/core/Fab";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
-import "./dropdown.css";
-import { IndeterminateCheckBox } from "@mui/icons-material";
 
 const supabase = createClient(
     "https://dsrgrtdunqtylmafczpg.supabase.co",
@@ -28,11 +33,9 @@ const systemMessage = {
         'Provide a sentence in the language and difficulty that is requested by the user. Your response must be only 1 single sentence that is only in the language requested. When the user provides their translation of the sentence, you responde with either "Correct" or "Incorrect". Provide the answer or vocabulary only when requested.',
 };
 
-
-
 function Success() {
     const navigate = useNavigate();
-    const languages = ["Japanese", "Chinese", "French", "Urdu"]
+    const languages = ["Japanese", "Chinese", "French", "Urdu"];
     const [selectedCountryIndex, setSelectedCountryIndex] = useState(0);
     const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
     const [username, setUsername] = useState("");
@@ -44,11 +47,15 @@ function Success() {
     const [enteredText, setEnteredText] = useState("");
     const [language, setLanguage] = useState("Japanese");
     const [difficulty, setDifficulty] = useState("beginner");
-
     const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
     const [currentSentence, setCurrentSentence] = useState("...");
     var isNewSentenceReq = true;
+
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+    const popoverAnchor = useRef(null);
+    let timeoutId = null;
 
     useEffect(() => {
         getUserData();
@@ -62,7 +69,7 @@ function Success() {
         }
     }, [tokens]);
 
-    async function pageInit() { }
+    async function pageInit() {}
 
     async function getUserData() {
         let email = "";
@@ -179,7 +186,7 @@ function Success() {
                     } else {
                         console.log(
                             "wasn't able to determine the result because of weird response:" +
-                            feedback
+                                feedback
                         );
                     }
                 }
@@ -270,13 +277,20 @@ function Success() {
                 setDifficulty("beginner");
                 break;
         }
-
     };
 
     const handleLanguageChange = (e) => {
         console.log(e.target.value);
         setLanguage(e.target.value);
-    }
+    };
+
+    const handlePopoverOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handlePopoverClose = () => {
+        setAnchorEl(null);
+    };
 
     function containsFeedback(str) {
         const feedbackText = str.toLowerCase();
@@ -312,13 +326,75 @@ function Success() {
                         >
                             <h2 color="inherit">LANG•AI</h2>
                             <Box sx={{ flexGrow: 1 }} />
-                            <AccountCircleIcon
-                                style={{ fontSize: "48px" }}
-                                onClick={() => {
-                                    signOutUser();
-                                }}
-                            />
-
+                            <div>
+                                <Fab
+                                    aria-owns={
+                                        open ? "mouse-over-popover" : undefined
+                                    }
+                                    aria-haspopup="true"
+                                    onMouseEnter={handlePopoverOpen}
+                                    onMouseLeave={() => {
+                                        //disable this event (it will be trigger as soon at the popover opens) or use it for autoHide
+                                        // timeoutId = setTimeout(handlePopoverClose, 5000);
+                                    }}
+                                >
+                                    <AccountCircleIcon
+                                        style={{ fontSize: "48px" }}
+                                    />
+                                </Fab>
+                                <Popover
+                                    id="mouse-over-popover"
+                                    open={open}
+                                    anchorEl={anchorEl}
+                                    anchorOrigin={{
+                                        vertical: "bottom",
+                                        horizontal: "right",
+                                    }}
+                                    transformOrigin={{
+                                        vertical: "top",
+                                        horizontal: "left",
+                                    }}
+                                    onClose={handlePopoverClose}
+                                >
+                                    <div
+                                        onMouseEnter={() =>
+                                            clearTimeout(timeoutId)
+                                        } // cancels any autohide timeouts
+                                        onMouseLeave={() => {
+                                            //autoHide is set to 2 secs
+                                            timeoutId = setTimeout(
+                                                handlePopoverClose,
+                                                500
+                                            );
+                                        }}
+                                    >
+                                        <Box
+                                            style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                width: "auto",
+                                            }}
+                                        >
+                                            <p>{username}</p>
+                                            <Button
+                                                onClick={() => {
+                                                    setStarted(false);
+                                                    handlePopoverClose();
+                                                }}
+                                            >
+                                                Settings
+                                            </Button>
+                                            <Button onClick={() => {
+                                                signOutUser();
+                                                handlePopoverClose();
+                                            }}>
+                                                Sign Out
+                                            </Button>
+                                        </Box>
+                                    </div>
+                                </Popover>
+                            </div>
                         </Toolbar>
                     </Box>
                     {isStarted ? (
@@ -351,7 +427,9 @@ function Success() {
                                         setEnteredText("");
                                         setResult("");
                                         isNewSentenceReq = true;
-                                        handleSend(`Give me another ${difficulty} level one.`);
+                                        handleSend(
+                                            `Give me another ${difficulty} level one.`
+                                        );
                                     } else {
                                         isNewSentenceReq = false;
                                         setTurnOver(true);
@@ -363,66 +441,81 @@ function Success() {
                             />
                         </div>
                     ) : (
-                        <><div style={{ display: "flex", justifyContent: "center" }}>
-                            <h3>{tokens > 0 ? "" : "No tokens remaining!"}</h3>
-                            <Box
+                        <>
+                            <div
                                 style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    width: '200px'                        
-                                }}>
-                                <h4>Learning</h4>
-                                <FormControl fullWidth>
-                                    <InputLabel id="demo-simple-select-label">Language</InputLabel>
-                                    <Select
-                                        labelId="demo-simple-select-label"
-                                        id="demo-simple-select"
-                                        label="Language"
-                                        defaultValue=""
-                                        onChange={handleLanguageChange}
-                                    >
-                                        {languages.map((lang, index) => (
-                                            <MenuItem key={index} value={lang}>{lang}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <h4>Difficulty</h4>
-                                <Rating
-                                    max={3}
-                                    onChange={handleDifficultyChange}
-                                    style={{ color: "#3F72AF" }} />
-                                <Button
-                                    variant="contained"
-                                    style={{ color: "black", backgroundColor: "#F9F7F7", marginTop: "10px" }}
-                                    disabled={awaitingGPT || lockUI}
-                                    onClick={() => {
-                                        let initPrompt =
-                                            "Please provide me a beginner level Japanese sentence.";
-                                        initPrompt = initPrompt.replace(
-                                            "beginner",
-                                            difficulty
-                                        );
-                                        initPrompt = initPrompt.replace(
-                                            "Japanese",
-                                            language
-                                        );
-                                        setStarted(true);
-                                        isNewSentenceReq = true;
-                                        handleSend(initPrompt);
+                                    display: "flex",
+                                    justifyContent: "center",
+                                }}
+                            >
+                                <h3>
+                                    {tokens > 0 ? "" : "No tokens remaining!"}
+                                </h3>
+                                <Box
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        width: "200px",
                                     }}
                                 >
-                                    Begin
-                                </Button>
-                            </Box>
-
-
-
-                        </div>
-
+                                    <h4>Learning</h4>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="demo-simple-select-label">
+                                            Language
+                                        </InputLabel>
+                                        <Select
+                                            labelId="demo-simple-select-label"
+                                            id="demo-simple-select"
+                                            label="Language"
+                                            defaultValue=""
+                                            onChange={handleLanguageChange}
+                                        >
+                                            {languages.map((lang, index) => (
+                                                <MenuItem
+                                                    key={index}
+                                                    value={lang}
+                                                >
+                                                    {lang}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                    <h4>Difficulty</h4>
+                                    <Rating
+                                        max={3}
+                                        onChange={handleDifficultyChange}
+                                        style={{ color: "#3F72AF" }}
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        style={{
+                                            color: "black",
+                                            backgroundColor: "#F9F7F7",
+                                            marginTop: "10px",
+                                        }}
+                                        disabled={awaitingGPT || lockUI}
+                                        onClick={() => {
+                                            let initPrompt =
+                                                "Please provide me a beginner level Japanese sentence.";
+                                            initPrompt = initPrompt.replace(
+                                                "beginner",
+                                                difficulty
+                                            );
+                                            initPrompt = initPrompt.replace(
+                                                "Japanese",
+                                                language
+                                            );
+                                            setStarted(true);
+                                            isNewSentenceReq = true;
+                                            handleSend(initPrompt);
+                                        }}
+                                    >
+                                        Begin
+                                    </Button>
+                                </Box>
+                            </div>
                         </>
-
-
                     )}
                 </>
             ) : (
