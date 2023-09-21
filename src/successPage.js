@@ -1,20 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
-import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import SubmitField from "./submitField";
 import {
     Box,
     Button,
     FormControl,
-    IconButton,
     InputLabel,
     MenuItem,
     Popover,
-    Paper,
     Rating,
     Select,
     Toolbar,
-    Typography,
 } from "@mui/material";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
@@ -23,8 +19,8 @@ import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-    "https://dsrgrtdunqtylmafczpg.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzcmdydGR1bnF0eWxtYWZjenBnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODA2NDkwNjcsImV4cCI6MTk5NjIyNTA2N30.TTAafA8ayCRUsEZKKknAIt6m3xY1uxlFHMtiI2amxv0"
+    process.env.REACT_APP_SUPABASE_PROJECT_URL,
+    process.env.REACT_APP_SUPABASE_API_KEY
 );
 
 const systemMessage = {
@@ -36,7 +32,6 @@ const systemMessage = {
 function Success() {
     const navigate = useNavigate();
     const languages = ["Japanese", "Chinese", "French", "Urdu"];
-    const [selectedCountryIndex, setSelectedCountryIndex] = useState(0);
     const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
     const [username, setUsername] = useState("");
     const [tokens, setTokens] = useState(null);
@@ -54,7 +49,6 @@ function Success() {
 
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
-    const popoverAnchor = useRef(null);
     let timeoutId = null;
 
     useEffect(() => {
@@ -68,9 +62,7 @@ function Success() {
             setLockUI(true);
         }
     }, [tokens]);
-
-    async function pageInit() {}
-
+    
     async function getUserData() {
         let email = "";
 
@@ -229,15 +221,6 @@ function Success() {
         return output;
     }
 
-    function getLastMsgFromChatGPT() {
-        for (let i = messages.length - 1; i >= 0; i--) {
-            if (messages[i].sender === "ChatGPT") {
-                return messages[i].message;
-            }
-        }
-        return "";
-    }
-
     const handleTextChange = (event) => {
         setEnteredText(event.target.value);
     };
@@ -301,15 +284,6 @@ function Success() {
             }
         }
         return false;
-    }
-
-    function getLastUserMessage() {
-        for (let i = messages.length - 1; i >= 0; i--) {
-            if (messages[i].sender === "user") {
-                return messages[i];
-            }
-        }
-        return null;
     }
 
     return (

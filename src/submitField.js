@@ -1,11 +1,10 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
-import CircleIcon from "@mui/icons-material/Circle";
 import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
 import SendIcon from "@mui/icons-material/Send";
+// import {CheckIcon, ClearIcon, SendIcon} from "@mui/icons-material";
+
 import Avatar from "@material-ui/core/Avatar";
 
 export default function SubmitField({
