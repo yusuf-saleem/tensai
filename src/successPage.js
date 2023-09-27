@@ -80,7 +80,6 @@ function Success() {
     }, [tokens]);
 
     useEffect(() => {
-        // Check if 'tokens' has been initialized from null and the effect has not run yet
         if (tokens !== null && !hasEffectRun.current) {
             console.log("Ready to begin");
             let initPrompt = process.env.REACT_APP_INIT_PROMPT;
@@ -102,7 +101,7 @@ function Success() {
             handleSend(initPrompt);
             hasEffectRun.current = true;
         }
-    }, [tokens]); // The 'tokens' variable is specified as a dependency.
+    }, [tokens]);
 
     async function getUserData() {
         let email = "";
@@ -538,8 +537,40 @@ function Success() {
                                                 })
                                                 .eq("email", username);
                                             if (error) console.log(error);
-
+                                            
                                             setStarted(true);
+                                            setMessages(null);
+                                            getUserData();
+                                            let initPrompt =
+                                                process.env
+                                                    .REACT_APP_INIT_PROMPT;
+                                            switch (difficulty) {
+                                                case 1:
+                                                    // Already set to beginner
+                                                    break;
+                                                case 2:
+                                                    initPrompt =
+                                                        initPrompt.replace(
+                                                            "beginner",
+                                                            "intermediate"
+                                                        );
+                                                    break;
+                                                case 3:
+                                                    initPrompt =
+                                                        initPrompt.replace(
+                                                            "beginner",
+                                                            "advanced"
+                                                        );
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                            initPrompt = initPrompt.replace(
+                                                "Japanese",
+                                                language
+                                            );
+                                            isNewSentenceReq = true;
+                                            handleSend(initPrompt);
                                         }}
                                     >
                                         Begin
