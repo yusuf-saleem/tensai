@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
+import Header from "./header"
 import SubmitField from "./submitField";
 import {
     Box,
@@ -61,11 +62,9 @@ function Success() {
     var isNewSentenceReq = true;
     const [selectedLanguage, setSelectedLanguage] = useState();
     const [selectedDifficulty, setSelectedDifficulty] = useState(1);
-
-    const [anchorEl, setAnchorEl] = useState(null);
-    const open = Boolean(anchorEl);
-    let timeoutId = null;
     const hasEffectRun = useRef(false);
+
+
 
     useEffect(() => {
         getUserData();
@@ -220,7 +219,7 @@ function Success() {
                     } else {
                         console.log(
                             "wasn't able to determine the result because of weird response:" +
-                                feedback
+                            feedback
                         );
                     }
                 }
@@ -304,13 +303,7 @@ function Success() {
         setSelectedLanguage(e.target.value);
     };
 
-    const handlePopoverOpen = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
 
-    const handlePopoverClose = () => {
-        setAnchorEl(null);
-    };
 
     function containsFeedback(str) {
         const feedbackText = str.toLowerCase();
@@ -327,93 +320,11 @@ function Success() {
         <ThemeProvider theme={theme}>
             {Object.keys(username).length !== 0 ? (
                 <>
-                    <Box sx={{ flexGrow: 1 }}>
-                        <Toolbar
-                            sx={{ flexGrow: 1 }}
-                            style={{
-                                backgroundColor: "initial",
-                                marginBottom: "40px",
-                            }}
-                        >
-                            <h2
-                                onClick={() => {
-                                    console.log(tokens);
-                                }}
-                                color="inherit"
-                            >
-                                LANG•AI
-                            </h2>
-                            <Box sx={{ flexGrow: 1 }} />
-                            <div>
-                                <Fab
-                                    aria-owns={
-                                        open ? "mouse-over-popover" : undefined
-                                    }
-                                    aria-haspopup="true"
-                                    onMouseEnter={handlePopoverOpen}
-                                    onMouseLeave={() => {}}
-                                >
-                                    <AccountCircleIcon
-                                        style={{ fontSize: "48px" }}
-                                    />
-                                </Fab>
-                                <Popover
-                                    id="mouse-over-popover"
-                                    open={open}
-                                    anchorEl={anchorEl}
-                                    anchorOrigin={{
-                                        vertical: "bottom",
-                                        horizontal: "right",
-                                    }}
-                                    transformOrigin={{
-                                        vertical: "top",
-                                        horizontal: "left",
-                                    }}
-                                    onClose={handlePopoverClose}
-                                >
-                                    <div
-                                        onMouseEnter={() =>
-                                            clearTimeout(timeoutId)
-                                        }
-                                        onMouseLeave={() => {
-                                            timeoutId = setTimeout(
-                                                handlePopoverClose,
-                                                500
-                                            );
-                                        }}
-                                    >
-                                        <Box
-                                            style={{
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                width: "auto",
-                                            }}
-                                        >
-                                            <p>{username}</p>
-                                            <Button
-                                                onClick={() => {
-                                                    setStarted(false);
-                                                    handlePopoverClose();
-                                                }}
-                                            >
-                                                Settings
-                                            </Button>
-                                            <Button
-                                                onClick={() => {
-                                                    signOutUser();
-                                                    handlePopoverClose();
-                                                }}
-                                            >
-                                                Sign Out
-                                            </Button>
-                                        </Box>
-                                    </div>
-                                </Popover>
-                            </div>
-                        </Toolbar>
-                    </Box>
-                    {language !== null && isStarted == true ? (
+                    <Header
+                        username={username}
+                        setStarted={setStarted}
+                        signOutUser={signOutUser} />
+                    {language !== null && isStarted === true ? (
                         <div
                             style={{
                                 textAlign: "center",
@@ -443,15 +354,15 @@ function Success() {
                                         setEnteredText("");
                                         setResult("");
                                         isNewSentenceReq = true;
-                                        if (difficulty == 1) {
+                                        if (difficulty === 1) {
                                             handleSend(
                                                 `Give me another beginner level one.`
                                             );
-                                        } else if (difficulty == 2) {
+                                        } else if (difficulty === 2) {
                                             handleSend(
                                                 `Give me another intermediate level one.`
                                             );
-                                        } else if (difficulty == 3) {
+                                        } else if (difficulty === 3) {
                                             handleSend(
                                                 `Give me another advanced level one.`
                                             );
@@ -537,7 +448,7 @@ function Success() {
                                                 })
                                                 .eq("email", username);
                                             if (error) console.log(error);
-                                            
+
                                             setStarted(true);
                                             setMessages(null);
                                             getUserData();
