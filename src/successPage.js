@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import SubmitField from "./submitField";
 import {
@@ -12,11 +12,25 @@ import {
     Select,
     Toolbar,
 } from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Fab from "@material-ui/core/Fab";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
+
+const theme = createTheme({
+    palette: {
+        primary: {
+            main: "#526D82",
+        },
+        secondary: {
+            main: "#9DB2BF",
+            light: "#DDE6ED",
+            contrastText: "#27374D",
+        },
+    },
+});
 
 const supabase = createClient(
     process.env.REACT_APP_SUPABASE_PROJECT_URL,
@@ -25,8 +39,7 @@ const supabase = createClient(
 
 const systemMessage = {
     role: "system",
-    content:
-        'Provide a sentence in the language and difficulty that is requested by the user. Your response must be only 1 single sentence that is only in the language requested. When the user provides their translation of the sentence, you responde with either "Correct" or "Incorrect". Provide the answer or vocabulary only when requested.',
+    content: process.env.REACT_APP_SYSTEM_PROMPT,
 };
 
 function Success() {
@@ -36,20 +49,23 @@ function Success() {
     const [username, setUsername] = useState("");
     const [tokens, setTokens] = useState(null);
     const [lockUI, setLockUI] = useState(false);
-    const [isStarted, setStarted] = useState(false);
+    const [isStarted, setStarted] = useState(true);
     const [turnOver, setTurnOver] = useState(false);
     const [result, setResult] = useState("");
     const [enteredText, setEnteredText] = useState("");
     const [language, setLanguage] = useState("Japanese");
-    const [difficulty, setDifficulty] = useState("beginner");
+    const [difficulty, setDifficulty] = useState(1);
     const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
     const [currentSentence, setCurrentSentence] = useState("...");
     var isNewSentenceReq = true;
+    const [selectedLanguage, setSelectedLanguage] = useState();
+    const [selectedDifficulty, setSelectedDifficulty] = useState(1);
 
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
     let timeoutId = null;
+    const hasEffectRun = useRef(false);
 
     useEffect(() => {
         getUserData();
@@ -62,7 +78,32 @@ function Success() {
             setLockUI(true);
         }
     }, [tokens]);
-    
+
+    useEffect(() => {
+        // Check if 'tokens' has been initialized from null and the effect has not run yet
+        if (tokens !== null && !hasEffectRun.current) {
+            console.log("Ready to begin");
+            let initPrompt = process.env.REACT_APP_INIT_PROMPT;
+            switch (difficulty) {
+                case 1:
+                    // Already set to beginner
+                    break;
+                case 2:
+                    initPrompt = initPrompt.replace("beginner", "intermediate");
+                    break;
+                case 3:
+                    initPrompt = initPrompt.replace("beginner", "advanced");
+                    break;
+                default:
+                    break;
+            }
+            initPrompt = initPrompt.replace("Japanese", language);
+            isNewSentenceReq = true;
+            handleSend(initPrompt);
+            hasEffectRun.current = true;
+        }
+    }, [tokens]); // The 'tokens' variable is specified as a dependency.
+
     async function getUserData() {
         let email = "";
 
@@ -79,15 +120,17 @@ function Success() {
 
         const { data, error } = await supabase
             .from("users")
-            .select("tokens")
+            .select()
             .eq("email", email)
             .single();
         if (error) {
-            console.log("Get user token error:");
+            console.log("Get user data error:");
             console.log(error);
         } else {
-            console.log("Got user token balance: " + data.tokens);
+            console.log(data);
             setTokens(data.tokens);
+            setLanguage(data.language);
+            setDifficulty(data.difficulty);
         }
     }
 
@@ -240,31 +283,26 @@ function Success() {
         navigate("/");
     }
 
-    const handleSelectDifficulty = (selectedOption) => {
-        console.log(`Selected difficulty: ${selectedOption.value}`);
-        setDifficulty(selectedOption.value);
-    };
-
-    const handleDifficultyChange = (event, newValue) => {
+    const handleDifficultySelect = (event, newValue) => {
         switch (newValue) {
             case 1:
-                setDifficulty("beginner");
+                setSelectedDifficulty(1);
                 break;
             case 2:
-                setDifficulty("intermediate");
+                setSelectedDifficulty(2);
                 break;
             case 3:
-                setDifficulty("advanced");
+                setSelectedDifficulty(3);
                 break;
             default:
-                setDifficulty("beginner");
+                setSelectedDifficulty(1);
                 break;
         }
     };
 
-    const handleLanguageChange = (e) => {
+    const handleLanguageSelect = (e) => {
         console.log(e.target.value);
-        setLanguage(e.target.value);
+        setSelectedLanguage(e.target.value);
     };
 
     const handlePopoverOpen = (event) => {
@@ -287,7 +325,7 @@ function Success() {
     }
 
     return (
-        <>
+        <ThemeProvider theme={theme}>
             {Object.keys(username).length !== 0 ? (
                 <>
                     <Box sx={{ flexGrow: 1 }}>
@@ -298,7 +336,14 @@ function Success() {
                                 marginBottom: "40px",
                             }}
                         >
-                            <h2 color="inherit">LANG•AI</h2>
+                            <h2
+                                onClick={() => {
+                                    console.log(tokens);
+                                }}
+                                color="inherit"
+                            >
+                                LANG•AI
+                            </h2>
                             <Box sx={{ flexGrow: 1 }} />
                             <div>
                                 <Fab
@@ -307,10 +352,7 @@ function Success() {
                                     }
                                     aria-haspopup="true"
                                     onMouseEnter={handlePopoverOpen}
-                                    onMouseLeave={() => {
-                                        //disable this event (it will be trigger as soon at the popover opens) or use it for autoHide
-                                        // timeoutId = setTimeout(handlePopoverClose, 5000);
-                                    }}
+                                    onMouseLeave={() => {}}
                                 >
                                     <AccountCircleIcon
                                         style={{ fontSize: "48px" }}
@@ -333,9 +375,8 @@ function Success() {
                                     <div
                                         onMouseEnter={() =>
                                             clearTimeout(timeoutId)
-                                        } // cancels any autohide timeouts
+                                        }
                                         onMouseLeave={() => {
-                                            //autoHide is set to 2 secs
                                             timeoutId = setTimeout(
                                                 handlePopoverClose,
                                                 500
@@ -359,10 +400,12 @@ function Success() {
                                             >
                                                 Settings
                                             </Button>
-                                            <Button onClick={() => {
-                                                signOutUser();
-                                                handlePopoverClose();
-                                            }}>
+                                            <Button
+                                                onClick={() => {
+                                                    signOutUser();
+                                                    handlePopoverClose();
+                                                }}
+                                            >
                                                 Sign Out
                                             </Button>
                                         </Box>
@@ -371,7 +414,7 @@ function Success() {
                             </div>
                         </Toolbar>
                     </Box>
-                    {isStarted ? (
+                    {language !== null && isStarted == true ? (
                         <div
                             style={{
                                 textAlign: "center",
@@ -401,9 +444,23 @@ function Success() {
                                         setEnteredText("");
                                         setResult("");
                                         isNewSentenceReq = true;
-                                        handleSend(
-                                            `Give me another ${difficulty} level one.`
-                                        );
+                                        if (difficulty == 1) {
+                                            handleSend(
+                                                `Give me another beginner level one.`
+                                            );
+                                        } else if (difficulty == 2) {
+                                            handleSend(
+                                                `Give me another intermediate level one.`
+                                            );
+                                        } else if (difficulty == 3) {
+                                            handleSend(
+                                                `Give me another advanced level one.`
+                                            );
+                                        } else {
+                                            handleSend(
+                                                `Give me another beginner level one.`
+                                            );
+                                        }
                                     } else {
                                         isNewSentenceReq = false;
                                         setTurnOver(true);
@@ -443,7 +500,7 @@ function Success() {
                                             id="demo-simple-select"
                                             label="Language"
                                             defaultValue=""
-                                            onChange={handleLanguageChange}
+                                            onChange={handleLanguageSelect}
                                         >
                                             {languages.map((lang, index) => (
                                                 <MenuItem
@@ -458,34 +515,42 @@ function Success() {
                                     <h4>Difficulty</h4>
                                     <Rating
                                         max={3}
-                                        onChange={handleDifficultyChange}
+                                        value={selectedDifficulty}
+                                        onChange={handleDifficultySelect}
                                         style={{ color: "#3F72AF" }}
                                     />
                                     <Button
                                         variant="contained"
                                         style={{
-                                            color: "black",
-                                            backgroundColor: "#F9F7F7",
                                             marginTop: "10px",
                                         }}
-                                        disabled={awaitingGPT || lockUI}
-                                        onClick={() => {
-                                            let initPrompt =
-                                                "Please provide me a beginner level Japanese sentence.";
-                                            initPrompt = initPrompt.replace(
-                                                "beginner",
-                                                difficulty
-                                            );
-                                            initPrompt = initPrompt.replace(
-                                                "Japanese",
-                                                language
-                                            );
+                                        disabled={
+                                            selectedLanguage === undefined ||
+                                            selectedDifficulty === undefined
+                                        }
+                                        onClick={async () => {
+                                            const { error } = await supabase
+                                                .from("users")
+                                                .update({
+                                                    language: selectedLanguage,
+                                                    difficulty:
+                                                        selectedDifficulty,
+                                                })
+                                                .eq("email", username);
+                                            if (error) console.log(error);
+
                                             setStarted(true);
-                                            isNewSentenceReq = true;
-                                            handleSend(initPrompt);
                                         }}
                                     >
                                         Begin
+                                    </Button>
+                                    <Button
+                                        onClick={() => {
+                                            console.log(selectedLanguage);
+                                            console.log(selectedDifficulty);
+                                        }}
+                                    >
+                                        test
                                     </Button>
                                 </Box>
                             </div>
@@ -506,7 +571,7 @@ function Success() {
                     </div>
                 </>
             )}
-        </>
+        </ThemeProvider>
     );
 }
 
