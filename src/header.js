@@ -9,7 +9,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Fab from "@material-ui/core/Fab";
 
 
-export default function SubmitField({username, setStarted, signOutUser}) {
+export default function Header({username, signOutUser, setShowSettings}) {
 
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
@@ -34,7 +34,7 @@ export default function SubmitField({username, setStarted, signOutUser}) {
             <h2
                 color="inherit"
             >
-                LANG•AI
+                TENSAI
             </h2>
             <Box sx={{ flexGrow: 1 }} />
             <div>
@@ -86,7 +86,7 @@ export default function SubmitField({username, setStarted, signOutUser}) {
                             <p>{username}</p>
                             <Button
                                 onClick={() => {
-                                    setStarted(false);
+                                    setShowSettings(true);
                                     handlePopoverClose();
                                 }}
                             >
