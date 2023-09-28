@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
+import Header from "./header";
+import Settings from "./settings";
 import SubmitField from "./submitField";
 import {
     Box,
@@ -7,15 +9,11 @@ import {
     FormControl,
     InputLabel,
     MenuItem,
-    Popover,
     Rating,
     Select,
-    Toolbar,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import Fab from "@material-ui/core/Fab";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 
@@ -44,7 +42,7 @@ const systemMessage = {
 
 function Success() {
     const navigate = useNavigate();
-    const languages = ["Japanese", "Chinese", "French", "Urdu"];
+
     const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
     const [username, setUsername] = useState("");
     const [tokens, setTokens] = useState(null);
@@ -58,13 +56,9 @@ function Success() {
     const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
     const [currentSentence, setCurrentSentence] = useState("...");
+    const [showSettings, setShowSettings] = useState("false");
     var isNewSentenceReq = true;
-    const [selectedLanguage, setSelectedLanguage] = useState();
-    const [selectedDifficulty, setSelectedDifficulty] = useState(1);
 
-    const [anchorEl, setAnchorEl] = useState(null);
-    const open = Boolean(anchorEl);
-    let timeoutId = null;
     const hasEffectRun = useRef(false);
 
     useEffect(() => {
@@ -160,7 +154,7 @@ function Success() {
     };
 
     async function registerNewUser() {
-        if (username != "") {
+        if (username !== "") {
             const { error } = await supabase
                 .from("users")
                 .insert({ email: username });
@@ -184,10 +178,7 @@ function Success() {
 
         const apiRequestBody = {
             model: "gpt-3.5-turbo",
-            messages: [
-                systemMessage, // The system message DEFINES the logic of our chatGPT
-                ...apiMessages, // The messages from our chat with ChatGPT
-            ],
+            messages: [systemMessage, ...apiMessages],
         };
 
         await fetch("https://api.openai.com/v1/chat/completions", {
@@ -226,7 +217,11 @@ function Success() {
                 }
                 if (isNewSentenceReq) {
                     console.log("New sentence received!");
-                    setCurrentSentence(data.choices[0].message.content);
+                    let nextSentence = data.choices[0].message.content;
+                    if (language === "Japanese") {
+                        nextSentence = getJapanese(nextSentence);
+                    }
+                    setCurrentSentence(nextSentence);
                 }
                 SetAwaitingGPT(false);
                 isNewSentenceReq = true;
@@ -271,7 +266,6 @@ function Success() {
         console.log("Setting newSentenceReq to false.");
         isNewSentenceReq = false;
         handleSend(`Here is my translation:"${enteredText}"`);
-
         document.getElementById("text-entry").disabled = true;
         document.getElementById("button-submit").disabled = true;
     };
@@ -281,36 +275,6 @@ function Success() {
         if (error) console.log(error);
         navigate("/");
     }
-
-    const handleDifficultySelect = (event, newValue) => {
-        switch (newValue) {
-            case 1:
-                setSelectedDifficulty(1);
-                break;
-            case 2:
-                setSelectedDifficulty(2);
-                break;
-            case 3:
-                setSelectedDifficulty(3);
-                break;
-            default:
-                setSelectedDifficulty(1);
-                break;
-        }
-    };
-
-    const handleLanguageSelect = (e) => {
-        console.log(e.target.value);
-        setSelectedLanguage(e.target.value);
-    };
-
-    const handlePopoverOpen = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handlePopoverClose = () => {
-        setAnchorEl(null);
-    };
 
     function containsFeedback(str) {
         const feedbackText = str.toLowerCase();
@@ -325,280 +289,65 @@ function Success() {
 
     return (
         <ThemeProvider theme={theme}>
-            {Object.keys(username).length !== 0 ? (
+            {tokens > 0 ? (
                 <>
-                    <Box sx={{ flexGrow: 1 }}>
-                        <Toolbar
-                            sx={{ flexGrow: 1 }}
-                            style={{
-                                backgroundColor: "initial",
-                                marginBottom: "40px",
-                            }}
-                        >
-                            <h2
-                                onClick={() => {
-                                    console.log(tokens);
-                                }}
-                                color="inherit"
-                            >
-                                LANG•AI
-                            </h2>
-                            <Box sx={{ flexGrow: 1 }} />
-                            <div>
-                                <Fab
-                                    aria-owns={
-                                        open ? "mouse-over-popover" : undefined
-                                    }
-                                    aria-haspopup="true"
-                                    onMouseEnter={handlePopoverOpen}
-                                    onMouseLeave={() => {}}
-                                >
-                                    <AccountCircleIcon
-                                        style={{ fontSize: "48px" }}
-                                    />
-                                </Fab>
-                                <Popover
-                                    id="mouse-over-popover"
-                                    open={open}
-                                    anchorEl={anchorEl}
-                                    anchorOrigin={{
-                                        vertical: "bottom",
-                                        horizontal: "right",
-                                    }}
-                                    transformOrigin={{
-                                        vertical: "top",
-                                        horizontal: "left",
-                                    }}
-                                    onClose={handlePopoverClose}
-                                >
-                                    <div
-                                        onMouseEnter={() =>
-                                            clearTimeout(timeoutId)
-                                        }
-                                        onMouseLeave={() => {
-                                            timeoutId = setTimeout(
-                                                handlePopoverClose,
-                                                500
-                                            );
-                                        }}
-                                    >
-                                        <Box
-                                            style={{
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                width: "auto",
-                                            }}
-                                        >
-                                            <p>{username}</p>
-                                            <Button
-                                                onClick={() => {
-                                                    setStarted(false);
-                                                    handlePopoverClose();
-                                                }}
-                                            >
-                                                Settings
-                                            </Button>
-                                            <Button
-                                                onClick={() => {
-                                                    signOutUser();
-                                                    handlePopoverClose();
-                                                }}
-                                            >
-                                                Sign Out
-                                            </Button>
-                                        </Box>
-                                    </div>
-                                </Popover>
-                            </div>
-                        </Toolbar>
-                    </Box>
-                    {language !== null && isStarted == true ? (
-                        <div
-                            style={{
-                                textAlign: "center",
-                            }}
-                        >
-                            <h2 id="sentence">
-                                {!awaitingGPT || turnOver ? (
-                                    currentSentence
-                                ) : (
-                                    <CircularProgress size={30} />
-                                )}
-                            </h2>
-                            <form
-                                onSubmit={(event) => {
-                                    event.preventDefault();
-                                    handleSubmitAnswer();
-                                }}
-                            ></form>
-                            <SubmitField
-                                enteredText={enteredText}
-                                onTextChange={handleTextChange}
-                                disabled={awaitingGPT || turnOver}
-                                result={result}
-                                onSendIconClick={() => {
-                                    if (turnOver) {
-                                        setTurnOver(false);
-                                        setEnteredText("");
-                                        setResult("");
-                                        isNewSentenceReq = true;
-                                        if (difficulty == 1) {
-                                            handleSend(
-                                                `Give me another beginner level one.`
-                                            );
-                                        } else if (difficulty == 2) {
-                                            handleSend(
-                                                `Give me another intermediate level one.`
-                                            );
-                                        } else if (difficulty == 3) {
-                                            handleSend(
-                                                `Give me another advanced level one.`
-                                            );
-                                        } else {
-                                            handleSend(
-                                                `Give me another beginner level one.`
-                                            );
-                                        }
-                                    } else {
-                                        isNewSentenceReq = false;
-                                        setTurnOver(true);
+                    <Header
+                        username={username}
+                        signOutUser={signOutUser}
+                        setShowSettings={setShowSettings}
+                    />
+                    {showSettings === true ? (
+                        <Settings
+                        username={username}
+                        setShowSettings={setShowSettings} />
+                    ) : (
+                        <SubmitField
+                            awaitingGPT={awaitingGPT}
+                            turnOver={turnOver}
+                            currentSentence={currentSentence}
+                            enteredText={enteredText}
+                            onSubmit={handleSubmitAnswer}
+                            onTextChange={handleTextChange}
+                            disabled={awaitingGPT || turnOver}
+                            result={result}
+                            onSendIconClick={() => {
+                                if (turnOver) {
+                                    setTurnOver(false);
+                                    setEnteredText("");
+                                    setResult("");
+                                    isNewSentenceReq = true;
+                                    if (difficulty === 1) {
                                         handleSend(
-                                            `Here is my translation:"${enteredText}"`
+                                            `Give me another beginner level one.`
+                                        );
+                                    } else if (difficulty === 2) {
+                                        handleSend(
+                                            `Give me another intermediate level one.`
+                                        );
+                                    } else if (difficulty === 3) {
+                                        handleSend(
+                                            `Give me another advanced level one.`
+                                        );
+                                    } else {
+                                        handleSend(
+                                            `Give me another beginner level one.`
                                         );
                                     }
-                                }}
-                            />
-                        </div>
-                    ) : (
-                        <>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <h3>
-                                    {tokens > 0 ? "" : "No tokens remaining!"}
-                                </h3>
-                                <Box
-                                    style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "center",
-                                        width: "200px",
-                                    }}
-                                >
-                                    <h4>Learning</h4>
-                                    <FormControl fullWidth>
-                                        <InputLabel id="demo-simple-select-label">
-                                            Language
-                                        </InputLabel>
-                                        <Select
-                                            labelId="demo-simple-select-label"
-                                            id="demo-simple-select"
-                                            label="Language"
-                                            defaultValue=""
-                                            onChange={handleLanguageSelect}
-                                        >
-                                            {languages.map((lang, index) => (
-                                                <MenuItem
-                                                    key={index}
-                                                    value={lang}
-                                                >
-                                                    {lang}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                    <h4>Difficulty</h4>
-                                    <Rating
-                                        max={3}
-                                        value={selectedDifficulty}
-                                        onChange={handleDifficultySelect}
-                                        style={{ color: "#3F72AF" }}
-                                    />
-                                    <Button
-                                        variant="contained"
-                                        style={{
-                                            marginTop: "10px",
-                                        }}
-                                        disabled={
-                                            selectedLanguage === undefined ||
-                                            selectedDifficulty === undefined
-                                        }
-                                        onClick={async () => {
-                                            const { error } = await supabase
-                                                .from("users")
-                                                .update({
-                                                    language: selectedLanguage,
-                                                    difficulty:
-                                                        selectedDifficulty,
-                                                })
-                                                .eq("email", username);
-                                            if (error) console.log(error);
-                                            
-                                            setStarted(true);
-                                            setMessages(null);
-                                            getUserData();
-                                            let initPrompt =
-                                                process.env
-                                                    .REACT_APP_INIT_PROMPT;
-                                            switch (difficulty) {
-                                                case 1:
-                                                    // Already set to beginner
-                                                    break;
-                                                case 2:
-                                                    initPrompt =
-                                                        initPrompt.replace(
-                                                            "beginner",
-                                                            "intermediate"
-                                                        );
-                                                    break;
-                                                case 3:
-                                                    initPrompt =
-                                                        initPrompt.replace(
-                                                            "beginner",
-                                                            "advanced"
-                                                        );
-                                                    break;
-                                                default:
-                                                    break;
-                                            }
-                                            initPrompt = initPrompt.replace(
-                                                "Japanese",
-                                                language
-                                            );
-                                            isNewSentenceReq = true;
-                                            handleSend(initPrompt);
-                                        }}
-                                    >
-                                        Begin
-                                    </Button>
-                                    <Button
-                                        onClick={() => {
-                                            console.log(selectedLanguage);
-                                            console.log(selectedDifficulty);
-                                        }}
-                                    >
-                                        test
-                                    </Button>
-                                </Box>
-                            </div>
-                        </>
+                                } else {
+                                    isNewSentenceReq = false;
+                                    setTurnOver(true);
+                                    handleSend(
+                                        `Here is my translation:"${enteredText}"`
+                                    );
+                                }
+                            }}
+                        />
                     )}
                 </>
             ) : (
                 <>
                     <div style={{ textAlign: "center" }}>
-                        <h1>Not Permitted</h1>
-                        <button
-                            onClick={() => {
-                                navigate("/");
-                            }}
-                        >
-                            Return
-                        </button>
+                        <CircularProgress/>
                     </div>
                 </>
             )}
