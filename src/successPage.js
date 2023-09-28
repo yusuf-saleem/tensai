@@ -154,7 +154,7 @@ function Success() {
     };
 
     async function registerNewUser() {
-        if (username != "") {
+        if (username !== "") {
             const { error } = await supabase
                 .from("users")
                 .insert({ email: username });
@@ -217,7 +217,11 @@ function Success() {
                 }
                 if (isNewSentenceReq) {
                     console.log("New sentence received!");
-                    setCurrentSentence(data.choices[0].message.content);
+                    let nextSentence = data.choices[0].message.content;
+                    if (language === "Japanese") {
+                        nextSentence = getJapanese(nextSentence);
+                    }
+                    setCurrentSentence(nextSentence);
                 }
                 SetAwaitingGPT(false);
                 isNewSentenceReq = true;
