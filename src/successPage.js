@@ -343,14 +343,7 @@ function Success() {
             ) : (
                 <>
                     <div style={{ textAlign: "center" }}>
-                        <h1>Not Permitted</h1>
-                        <button
-                            onClick={() => {
-                                navigate("/");
-                            }}
-                        >
-                            Return
-                        </button>
+                        <CircularProgress/>
                     </div>
                 </>
             )}

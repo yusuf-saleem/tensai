@@ -108,7 +108,7 @@ export default function SubmitField({ username, setShowSettings }) {
                                 })
                                 .eq("email", username);
                             if (error) console.log(error);
-                            navigate("/dashboard")
+                            navigate(0)
                         }}
                     >
                         Begin
