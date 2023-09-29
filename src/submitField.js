@@ -96,8 +96,9 @@ export default function SubmitField({
                     />
                 </form>
                 <Avatar
-                    onClick={onSendIconClick}
-                    disabled={true}
+                    onClick={() => {
+                        onSendIconClick();
+                    }}
                     style={{
                         backgroundColor: "#F9F7F7",
                         border: `1px solid`,

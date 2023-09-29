@@ -220,7 +220,7 @@ function Success() {
                     console.log("New sentence received!");
                     let nextSentence = data.choices[0].message.content;
                     if (language === "Japanese") {
-                        nextSentence = getJapanese(nextSentence);
+                        nextSentence = filterRomanChars(nextSentence);
                     }
                     setCurrentSentence(nextSentence);
                 }
@@ -229,34 +229,27 @@ function Success() {
             });
     }
 
-    function getJapanese(str) {
-        console.log("Parsing japanese from received msg.");
+    function filterRomanChars(inputString) {
+        let filteredString = "";
 
-        const output = [...str]
-            .filter(
-                (char) =>
-                    (char.charCodeAt(0) >= 0x3040 &&
-                        char.charCodeAt(0) <= 0x309f) || // Hiragana
-                    (char.charCodeAt(0) >= 0x30a0 &&
-                        char.charCodeAt(0) <= 0x30ff) || // Katakana
-                    (char.charCodeAt(0) >= 0x4e00 &&
-                        char.charCodeAt(0) <= 0x9fff) || // Kanji
-                    (char.charCodeAt(0) >= 0xff10 &&
-                        char.charCodeAt(0) <= 0xff19) || // Numbers
-                    char === "0" ||
-                    char === "1" ||
-                    char === "2" ||
-                    char === "3" ||
-                    char === "4" ||
-                    char === "5" ||
-                    char === "6" ||
-                    char === "7" ||
-                    char === "8" ||
-                    char === "9" ||
-                    char === "。"
-            )
-            .join("");
-        return output;
+        // Iterate through each character in the input string
+        for (let i = 0; i < inputString.length; i++) {
+            const charCode = inputString.charCodeAt(i);
+
+            // Check if the character is not a Roman character (a-zA-Z) or a bracket (())
+            if (
+                (charCode < 65 || charCode > 90) &&
+                (charCode < 97 || charCode > 122) &&
+                charCode !== 40 &&
+                charCode !== 41 &&
+                charCode !== 58
+            ) {
+                // Append the character to the filtered result
+                filteredString += inputString[i];
+            }
+        }
+
+        return filteredString;
     }
 
     const handleTextChange = (event) => {
@@ -264,6 +257,12 @@ function Success() {
     };
 
     const handleSubmitAnswer = (event) => {
+        console.log("handleSubmitAnswer called")
+        if (enteredText === "") {
+            console.log("Empty  text!!!");
+        } else {
+            console.log("enteredTexttt:" + enteredText);
+        }
         console.log("Setting newSentenceReq to false.");
         isNewSentenceReq = false;
         handleSend(`Here is my translation:"${enteredText}"`);
@@ -303,47 +302,52 @@ function Success() {
                             setShowSettings={setShowSettings}
                         />
                     ) : (
-                        <SubmitField
-                            awaitingGPT={awaitingGPT}
-                            turnOver={turnOver}
-                            currentSentence={currentSentence}
-                            enteredText={enteredText}
-                            onSubmit={handleSubmitAnswer}
-                            onTextChange={handleTextChange}
-                            disabled={awaitingGPT || turnOver}
-                            result={result}
-                            onSendIconClick={() => {
-                                if (turnOver) {
-                                    setTurnOver(false);
-                                    setEnteredText("");
-                                    setResult("");
-                                    isNewSentenceReq = true;
-                                    if (difficulty === 1) {
-                                        handleSend(
-                                            `Give me another beginner level one.`
-                                        );
-                                    } else if (difficulty === 2) {
-                                        handleSend(
-                                            `Give me another intermediate level one.`
-                                        );
-                                    } else if (difficulty === 3) {
-                                        handleSend(
-                                            `Give me another advanced level one.`
-                                        );
+                        <>
+                            <SubmitField
+                                awaitingGPT={awaitingGPT}
+                                turnOver={turnOver}
+                                currentSentence={currentSentence}
+                                enteredText={enteredText}
+                                onSubmit={handleSubmitAnswer}
+                                onTextChange={handleTextChange}
+                                disabled={awaitingGPT || turnOver}
+                                result={result}
+                                onSendIconClick={() => {
+                                    if (turnOver) {
+                                        setTurnOver(false);
+                                        setEnteredText("");
+                                        setResult("");
+                                        isNewSentenceReq = true;
+                                        if (difficulty === 1) {
+                                            handleSend(
+                                                `Give me another beginner level one.`
+                                            );
+                                        } else if (difficulty === 2) {
+                                            handleSend(
+                                                `Give me another intermediate level one.`
+                                            );
+                                        } else if (difficulty === 3) {
+                                            handleSend(
+                                                `Give me another advanced level one.`
+                                            );
+                                        } else {
+                                            handleSend(
+                                                `Give me another beginner level one.`
+                                            );
+                                        }
                                     } else {
-                                        handleSend(
-                                            `Give me another beginner level one.`
-                                        );
+                                        if (enteredText !== "") {
+                                            isNewSentenceReq = false;
+                                            setTurnOver(true);
+                                            handleSend(
+                                                `Here is my translation:"${enteredText}"`
+                                            );
+                                        }
+                                        
                                     }
-                                } else {
-                                    isNewSentenceReq = false;
-                                    setTurnOver(true);
-                                    handleSend(
-                                        `Here is my translation:"${enteredText}"`
-                                    );
-                                }
-                            }}
-                        />
+                                }}
+                            />
+                        </>
                     )}
                 </>
             ) : (
