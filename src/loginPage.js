@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
+import Footer from "./footer";
 
 const supabase = createClient(
     process.env.REACT_APP_SUPABASE_PROJECT_URL,
@@ -32,15 +33,37 @@ export default function App() {
         return (
             <div className="App">
                 <header className="App-header">
-                    <h1>langAI</h1>
-                    <p>Please Log In</p>
+                    <h1
+                        style={{
+                            fontFamily: "'Rubik Mono One', sans-serif",
+                            letterSpacing: "20px",
+                            fontSize: "120px",
+                        }}
+                    >
+                        TENS<span style={{ color: "#526D82" }}>AI</span>
+                    </h1>
+                    <h2>Language learning powered by AI.</h2>
+                    <br />
+                    <br />
+                    <h3>Please Log In</h3>
                     <Auth
                         supabaseClient={supabase}
-                        appearance={{ theme: ThemeSupa }}
-                        theme="dark"
                         onlyThirdPartyProviders="true"
+                        appearance={{
+                            theme: ThemeSupa,
+                            variables: {
+                                default: {
+                                    colors: {
+                                        defaultButtonText: "#27374D",
+                                        defaultButtonBackground: "white",
+                                        defaultButtonBackgroundHover: "#9DB2BF",
+                                    },
+                                },
+                            },
+                        }}
                         providers={["google", "discord"]}
                     />
+                    <Footer />
                 </header>
             </div>
         );

@@ -18,7 +18,15 @@
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: black;
+  color: #27374D;
+}
+
+.content-container {
+  flex-grow: 1; /* Grow to take remaining space */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .App-link {

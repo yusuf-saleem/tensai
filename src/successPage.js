@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import Header from "./header";
+import Footer from "./footer";
 import Settings from "./settings";
 import SubmitField from "./submitField";
 import {
@@ -298,8 +299,9 @@ function Success() {
                     />
                     {showSettings === true ? (
                         <Settings
-                        username={username}
-                        setShowSettings={setShowSettings} />
+                            username={username}
+                            setShowSettings={setShowSettings}
+                        />
                     ) : (
                         <SubmitField
                             awaitingGPT={awaitingGPT}
@@ -347,10 +349,11 @@ function Success() {
             ) : (
                 <>
                     <div style={{ textAlign: "center" }}>
-                        <CircularProgress/>
+                        <CircularProgress />
                     </div>
                 </>
             )}
+            <Footer />
         </ThemeProvider>
     );
 }
