@@ -219,7 +219,7 @@ function Success() {
                 if (isNewSentenceReq) {
                     console.log("New sentence received!");
                     let nextSentence = data.choices[0].message.content;
-                    if (language === "Japanese") {
+                    if ((language !== "French") && (language !== "Spanish")) {
                         nextSentence = filterRomanChars(nextSentence);
                     }
                     setCurrentSentence(nextSentence);
