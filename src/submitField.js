@@ -92,7 +92,7 @@ export default function SubmitField({
                             marginRight: "-0px",
                             justifyContent: "center",
                         }}
-                        placeholder="Enter your translation..."
+                        placeholder="Enter translation..."
                     />
                 </form>
                 <Avatar

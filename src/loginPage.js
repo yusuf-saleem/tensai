@@ -36,8 +36,6 @@ export default function App() {
                     <h1
                         style={{
                             fontFamily: "'Rubik Mono One', sans-serif",
-                            letterSpacing: "20px",
-                            fontSize: "120px",
                         }}
                     >
                         TENS<span style={{ color: "#526D82" }}>AI</span>

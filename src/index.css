@@ -1,13 +1,14 @@
 :root {
     font-family: Helvetica;
     font-weight: 400;
-  }
+}
 
 a {
     font-weight: 500;
     color: #646cff;
     text-decoration: inherit;
 }
+
 a:hover {
     color: #535bf2;
 }
@@ -17,17 +18,44 @@ body {
 }
 
 h1 {
-    font-size: 3.2em;
-    line-height: 1.1;
     margin: 0;
 }
 
+/* Media query for smaller screens */
+@media screen and (max-width: 767px) {
+    h1 {
+        letter-spacing: 0px;
+        font-size: 60px;
+    }
+}
+
+/* Media query for larger screens */
+@media screen and (min-width: 768px) {
+    h1 {
+        letter-spacing: 20px;
+        font-size: 120px;
+    }
+}
+
 h2 {
-    font-size: 30px;
     font-weight: 100;
     display: inline-block;
     margin: 0;
     color: #526d82;
+}
+
+/* Media query for smaller screens */
+@media screen and (max-width: 767px) {
+    h2 {
+        font-size: 24px;
+    }
+}
+
+/* Media query for larger screens */
+@media screen and (min-width: 768px) {
+    h2 {
+        font-size: 30px;
+    }
 }
 
 h3 {
@@ -48,6 +76,20 @@ p {
     color: #526D82;
 }
 
+/* Default placeholder font size */
+#text-entry::-webkit-input-placeholder {
+    font-size: 16px;
+    /* Adjust this value as needed */
+}
+
+/* Media query for smaller screens */
+@media screen and (max-width: 767px) {
+    #text-entry::-webkit-input-placeholder {
+        font-size: 14px;
+        /* Adjust this value for smaller screens */
+    }
+}
+
 button {
     border-radius: 8px;
     border: 1px solid transparent;
@@ -60,9 +102,11 @@ button {
     transition: border-color 0.25s;
     margin: 10px 0 0 0;
 }
+
 button:hover {
     border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
     outline: 4px auto -webkit-focus-ring-color;
@@ -73,9 +117,11 @@ button:focus-visible {
         color: #213547;
         background-color: #dbe2ef;
     }
+
     a:hover {
         color: #747bff;
     }
+
     button {
         background-color: #f9f9f9;
     }
