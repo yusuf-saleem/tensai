@@ -179,6 +179,7 @@ function Success() {
 
         const apiRequestBody = {
             model: "gpt-3.5-turbo",
+            max_tokens: 20,
             messages: [systemMessage, ...apiMessages],
         };
 
@@ -212,13 +213,14 @@ function Success() {
                     } else {
                         console.log(
                             "wasn't able to determine the result because of weird response:" +
-                                feedback
+                            feedback
                         );
                     }
                 }
                 if (isNewSentenceReq) {
                     console.log("New sentence received!");
                     let nextSentence = data.choices[0].message.content;
+                    nextSentence = extractUpToDelimiters(nextSentence)
                     if ((language !== "French") && (language !== "Spanish")) {
                         nextSentence = filterRomanChars(nextSentence);
                     }
@@ -229,23 +231,61 @@ function Success() {
             });
     }
 
+    function extractUpToDelimiters(inputString) {
+        let extractedString = "";
+        let foundDelimiter = false;
+
+        for (let i = 0; i < inputString.length; i++) {
+            const char = inputString[i];
+
+            // Skip double quotation marks
+            if (char === '"') {
+                continue;
+            }
+
+            // Skip characters '「' and '」'
+            if (char === '「' || char === '」') {
+                continue;
+            }
+
+            extractedString += char;
+
+            if (char === '.' || char === '?' || char === '。' || char === '!') {
+                break;
+            }
+        }
+
+        return extractedString;
+    }
+
     function filterRomanChars(inputString) {
         let filteredString = "";
+        let foundDelimiter = false; // Flag to track if a delimiter is found
 
         // Iterate through each character in the input string
         for (let i = 0; i < inputString.length; i++) {
-            const charCode = inputString.charCodeAt(i);
+            const char = inputString[i];
 
-            // Check if the character is not a Roman character (a-zA-Z) or a bracket (())
-            if (
-                (charCode < 65 || charCode > 90) &&
-                (charCode < 97 || charCode > 122) &&
-                charCode !== 40 &&
-                charCode !== 41 &&
-                charCode !== 58
+            // Check if the character is one of the specified delimiters
+            if (char === '.' || char === '?' || char === '。' || char === '!') {
+                foundDelimiter = true;
+            }
+
+            // If a delimiter is found or if it's not a Roman character or bracket,
+            // add the character to the filtered result
+            if (foundDelimiter ||
+                (char.charCodeAt(0) < 65 || char.charCodeAt(0) > 90) &&
+                (char.charCodeAt(0) < 97 || char.charCodeAt(0) > 122) &&
+                char !== '(' &&
+                char !== ')' &&
+                char !== ':'
             ) {
-                // Append the character to the filtered result
-                filteredString += inputString[i];
+                filteredString += char;
+            }
+
+            // If a delimiter is found, break out of the loop
+            if (foundDelimiter) {
+                break;
             }
         }
 
@@ -343,7 +383,7 @@ function Success() {
                                                 `Here is my translation:"${enteredText}"`
                                             );
                                         }
-                                        
+
                                     }
                                 }}
                             />
