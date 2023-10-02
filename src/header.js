@@ -2,11 +2,31 @@ import React, { useState, useEffect, useRef } from "react";
 import { Box, Button, Popover, Toolbar } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Fab from "@material-ui/core/Fab";
+import { makeStyles } from "@material-ui/core/styles";
+
+const useStyles = makeStyles((theme) => ({
+    customFab: {
+        "&:hover": {
+            backgroundColor: "transparent", 
+        },
+        "&:focus": {
+            outline: "none", 
+            backgroundColor: "transparent", 
+        },
+    },
+}));
 
 export default function Header({ username, signOutUser, setShowSettings }) {
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
     let timeoutId = null;
+    const classes = useStyles();
+
+    const hrStyle = {
+        borderTop: '1px solid #DDE6ED',
+        width: '100%', // Adjust the width to your preference
+        margin: '10px 0', // Add margin for spacing
+      };
 
     const handlePopoverOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -38,14 +58,16 @@ export default function Header({ username, signOutUser, setShowSettings }) {
                 <Box sx={{ flexGrow: 1 }} />
                 <div>
                     <Fab
+                        elevation={0}
+                        className={classes.customFab}
                         aria-owns={open ? "mouse-over-popover" : undefined}
-                        aria-haspopup="true"
-                        onMouseEnter={handlePopoverOpen}
-                        onMouseLeave={() => {}}
+                        aria-haspopup="false"
+                        onClick={handlePopoverOpen}
                     >
                         <AccountCircleIcon style={{ fontSize: "48px" }} />
                     </Fab>
                     <Popover
+                        className={classes.roundedPopover}
                         id="mouse-over-popover"
                         open={open}
                         anchorEl={anchorEl}
@@ -60,7 +82,6 @@ export default function Header({ username, signOutUser, setShowSettings }) {
                         onClose={handlePopoverClose}
                     >
                         <div
-                            onMouseEnter={() => clearTimeout(timeoutId)}
                             onMouseLeave={() => {
                                 timeoutId = setTimeout(handlePopoverClose, 500);
                             }}
@@ -71,10 +92,19 @@ export default function Header({ username, signOutUser, setShowSettings }) {
                                     flexDirection: "column",
                                     alignItems: "center",
                                     width: "auto",
+                                    padding: "16px",
+                                    backgroundColor: "",
                                 }}
                             >
-                                <p>{username}</p>
+                                <h3>{username}</h3>
+                                <hr style={hrStyle} />
                                 <Button
+                                    style={{
+                                        color: "#9DB2BF",
+                                        fontSize: "16px",
+                                        fontWeight: "600",
+                                        width: "100%"
+                                    }}
                                     onClick={() => {
                                         setShowSettings(true);
                                         handlePopoverClose();
@@ -83,6 +113,12 @@ export default function Header({ username, signOutUser, setShowSettings }) {
                                     Settings
                                 </Button>
                                 <Button
+                                    style={{
+                                        color: "#9DB2BF",
+                                        fontSize: "16px",
+                                        fontWeight: "600",
+                                        width: "100%"
+                                    }}
                                     onClick={() => {
                                         signOutUser();
                                         handlePopoverClose();
@@ -95,7 +131,6 @@ export default function Header({ username, signOutUser, setShowSettings }) {
                     </Popover>
                 </div>
             </Toolbar>
-            
         </Box>
     );
 }
