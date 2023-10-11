@@ -8,7 +8,7 @@ import Footer from "./footer";
 
 const supabase = createClient(
     process.env.REACT_APP_SUPABASE_PROJECT_URL,
-    process.env.REACT_APP_SUPABASE_PUBLIC_KEY
+    process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
 );
 
 export default function App() {
