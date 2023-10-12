@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Box, Button, Popover, Toolbar } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Fab from "@material-ui/core/Fab";
@@ -19,7 +19,6 @@ const useStyles = makeStyles((theme) => ({
 export default function Header({ username, signOutUser, setShowSettings }) {
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
-    let timeoutId = null;
     const classes = useStyles();
 
     const hrStyle = {
@@ -83,7 +82,7 @@ export default function Header({ username, signOutUser, setShowSettings }) {
                     >
                         <div
                             onMouseLeave={() => {
-                                timeoutId = setTimeout(handlePopoverClose, 500);
+                                setTimeout(handlePopoverClose, 500);
                             }}
                         >
                             <Box

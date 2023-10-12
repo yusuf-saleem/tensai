@@ -2,7 +2,6 @@ import './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from "./loginPage"
 import Success from './successPage'
-import Footer from './footer'
 
 function App() {
     return (

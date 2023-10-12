@@ -4,15 +4,6 @@ import Header from "./header";
 import Footer from "./footer";
 import Settings from "./settings";
 import SubmitField from "./submitField";
-import {
-    Box,
-    Button,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Rating,
-    Select,
-} from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { useNavigate } from "react-router-dom";
@@ -44,11 +35,10 @@ const systemMessage = {
 function Success() {
     const navigate = useNavigate();
 
-    const [apiKey, setApiKey] = useState(process.env.REACT_APP_OPENAI_API_KEY);
+    const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
     const [username, setUsername] = useState("");
     const [tokens, setTokens] = useState(null);
     const [lockUI, setLockUI] = useState(false);
-    const [isStarted, setStarted] = useState(true);
     const [turnOver, setTurnOver] = useState(false);
     const [result, setResult] = useState("");
     const [enteredText, setEnteredText] = useState("");
@@ -64,6 +54,7 @@ function Success() {
 
     useEffect(() => {
         getUserData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -159,6 +150,7 @@ function Success() {
             const { error } = await supabase
                 .from("users")
                 .insert({ email: username });
+            if (error) console.log(error);
         }
     }
 
@@ -179,7 +171,6 @@ function Success() {
 
         const apiRequestBody = {
             model: "gpt-3.5-turbo",
-            max_tokens: 20,
             messages: [systemMessage, ...apiMessages],
         };
 
@@ -233,7 +224,6 @@ function Success() {
 
     function extractUpToDelimiters(inputString) {
         let extractedString = "";
-        let foundDelimiter = false;
 
         for (let i = 0; i < inputString.length; i++) {
             const char = inputString[i];
@@ -274,11 +264,11 @@ function Success() {
             // If a delimiter is found or if it's not a Roman character or bracket,
             // add the character to the filtered result
             if (foundDelimiter ||
-                (char.charCodeAt(0) < 65 || char.charCodeAt(0) > 90) &&
-                (char.charCodeAt(0) < 97 || char.charCodeAt(0) > 122) &&
-                char !== '(' &&
-                char !== ')' &&
-                char !== ':'
+                ((char.charCodeAt(0) < 65 || char.charCodeAt(0) > 90) &&
+                    (char.charCodeAt(0) < 97 || char.charCodeAt(0) > 122) &&
+                    char !== '(' &&
+                    char !== ')' &&
+                    char !== ':')
             ) {
                 filteredString += char;
             }
@@ -352,6 +342,7 @@ function Success() {
                                 onTextChange={handleTextChange}
                                 disabled={awaitingGPT || turnOver}
                                 result={result}
+                                lockUI={lockUI}
                                 onSendIconClick={() => {
                                     if (turnOver) {
                                         setTurnOver(false);

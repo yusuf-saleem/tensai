@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import TextField from "@mui/material/TextField";
 import CheckIcon from "@mui/icons-material/Check";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -18,7 +18,8 @@ export default function SubmitField({
     onSubmit,
     disabled,
     result,
-    turnOver
+    turnOver,
+    lockUI
 }) {
 
 
