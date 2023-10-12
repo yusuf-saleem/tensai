@@ -305,7 +305,7 @@ function Success() {
         }
         console.log("Setting newSentenceReq to false.");
         isNewSentenceReq = false;
-        handleSend(`Here is my translation:"${enteredText}"`);
+        handleSend(`Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`);
         document.getElementById("text-entry").disabled = true;
         document.getElementById("button-submit").disabled = true;
     };
@@ -380,7 +380,7 @@ function Success() {
                                             isNewSentenceReq = false;
                                             setTurnOver(true);
                                             handleSend(
-                                                `Here is my translation:"${enteredText}"`
+                                                `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
                                             );
                                         }
 
