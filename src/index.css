@@ -17,79 +17,6 @@ body {
     margin: 0;
 }
 
-h1 {
-    margin: 0;
-}
-
-/* Media query for smaller screens */
-@media screen and (max-width: 767px) {
-    h1 {
-        letter-spacing: 0px;
-        font-size: 60px;
-    }
-}
-
-/* Media query for larger screens */
-@media screen and (min-width: 768px) {
-    h1 {
-        letter-spacing: 20px;
-        font-size: 120px;
-    }
-}
-
-h2 {
-    font-weight: 100;
-    display: inline-block;
-    margin: 0;
-    color: #526d82;
-}
-
-/* Media query for smaller screens */
-@media screen and (max-width: 767px) {
-    h2 {
-        font-size: 24px;
-    }
-}
-
-/* Media query for larger screens */
-@media screen and (min-width: 768px) {
-    h2 {
-        font-size: 30px;
-    }
-}
-
-h3 {
-    font-size: 20px;
-    display: inline-block;
-    margin: 0;
-    color: #27374d;
-}
-
-h4 {
-    margin: 10px 0 10px 0;
-}
-
-p {
-    font-size: 16px;
-    display: inline-block;
-    margin: 0;
-    color: #526D82;
-}
-
-/* Default placeholder font size */
-#text-entry::-webkit-input-placeholder {
-    font-size: 16px;
-    /* Adjust this value as needed */
-}
-
-/* Media query for smaller screens */
-@media screen and (max-width: 767px) {
-    #text-entry::-webkit-input-placeholder {
-        font-size: 14px;
-        /* Adjust this value for smaller screens */
-    }
-}
-
 button {
     border-radius: 8px;
     border: 1px solid transparent;
@@ -110,6 +37,79 @@ button:hover {
 button:focus,
 button:focus-visible {
     outline: 4px auto -webkit-focus-ring-color;
+}
+
+.typist-font {
+    font-size: 64px;
+}
+
+.Cursor {
+    font-size: 64px; /* Change the font size to 64px */
+}
+
+h1 {
+    margin: 0;
+}
+
+h2 {
+    margin: "16px 0px";
+}
+
+h3 {
+    font-size: 24px;
+    font-weight: 100;
+    display: inline-block;
+    margin: 6px 0px;
+    color: #27374d;
+}
+
+h4 {
+    margin: 10px 0 10px 0;
+}
+
+p {
+    font-size: 16px;
+    display: inline-block;
+    margin: 0;
+    color: #526d82;
+}
+
+/* Media query for smaller screens */
+@media screen and (max-width: 767px) {
+    h1 {
+        letter-spacing: 0px;
+        font-size: 60px;
+    }
+}
+
+/* Media query for larger screens */
+@media screen and (min-width: 768px) {
+    h1 {
+        letter-spacing: 20px;
+        font-size: 120px;
+    }
+}
+
+/* Media query for smaller screens */
+@media screen and (max-width: 767px) {
+    h2 {
+        font-size: 24px;
+    }
+}
+
+/* Media query for larger screens */
+@media screen and (min-width: 768px) {
+    h2 {
+        font-size: 30px;
+    }
+}
+
+/* Media query for smaller screens */
+@media screen and (max-width: 767px) {
+    #text-entry::-webkit-input-placeholder {
+        font-size: 14px;
+        /* Adjust this value for smaller screens */
+    }
 }
 
 @media (prefers-color-scheme: light) {
