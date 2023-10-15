@@ -50,6 +50,7 @@ export default function App() {
                             <Auth
                                 supabaseClient={supabase}
                                 onlyThirdPartyProviders="true"
+                                redirectTo={window.location.origin + `/dashboard`}
                                 appearance={{
                                     theme: ThemeSupa,
                                     variables: {

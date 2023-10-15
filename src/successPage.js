@@ -120,6 +120,7 @@ function Success() {
     }
 
     const handleSend = async (message) => {
+        console.log("Current user tokens:" + tokens)
         if (tokens > 0) {
             const { error } = await supabase
                 .from("users")
@@ -173,7 +174,8 @@ function Success() {
             model: "gpt-3.5-turbo",
             messages: [systemMessage, ...apiMessages],
         };
-
+        console.log("1")
+        console.log(apiKey)
         await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -183,9 +185,12 @@ function Success() {
             body: JSON.stringify(apiRequestBody),
         })
             .then((data) => {
+                console.log("2")
                 return data.json();
             })
             .then((data) => {
+                console.log("3")
+                console.log(data)
                 setMessages([
                     ...chatMessages,
                     {
@@ -193,6 +198,7 @@ function Success() {
                         sender: "ChatGPT",
                     },
                 ]);
+                console.log("4")
                 console.log("Received:", data.choices[0].message.content);
                 if (containsFeedback(data.choices[0].message.content)) {
                     const feedback =
