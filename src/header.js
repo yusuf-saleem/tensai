@@ -50,6 +50,7 @@ export default function Header({ username, signOutUser, setShowSettings }) {
                         fontFamily: "'Rubik Mono One', sans-serif",
                         letterSpacing: "0px",
                         fontSize: "36px",
+                        color: "#213547",
                     }}
                 >
                     TENS<span style={{ color: "#526D82" }}>AI</span>

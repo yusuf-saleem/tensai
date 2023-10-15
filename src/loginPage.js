@@ -36,6 +36,7 @@ export default function App() {
                     <h1
                         style={{
                             fontFamily: "'Rubik Mono One', sans-serif",
+                            color: "#213547",
                         }}
                     >
                         TENS<span style={{ color: "#526D82" }}>AI</span>
@@ -44,24 +45,32 @@ export default function App() {
                     <br />
                     <br />
                     <h3>Please Log In</h3>
-                    <Auth
-                        supabaseClient={supabase}
-                        onlyThirdPartyProviders="true"
-                        appearance={{
-                            theme: ThemeSupa,
-                            variables: {
-                                default: {
-                                    colors: {
-                                        defaultButtonText: "#27374D",
-                                        defaultButtonBackground: "white",
-                                        defaultButtonBackgroundHover: "#9DB2BF",
+                    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                        <div style={{ width: "max-content" }}>
+                            <Auth
+                                supabaseClient={supabase}
+                                onlyThirdPartyProviders="true"
+                                redirectTo={window.location.origin + `/dashboard`}
+                                appearance={{
+                                    theme: ThemeSupa,
+                                    variables: {
+                                        default: {
+                                            colors: {
+                                                defaultButtonText: "#27374D",
+                                                defaultButtonBackground:
+                                                    "white",
+                                                defaultButtonBackgroundHover:
+                                                    "#9DB2BF",
+                                            },
+                                        },
                                     },
-                                },
-                            },
-                        }}
-                        providers={["google", "discord"]}
-                    />
-                    <Footer />
+                                }}
+                                providers={["google", "discord"]}
+                            />
+                        </div>
+
+                        <Footer />
+                    </div>
                 </header>
             </div>
         );

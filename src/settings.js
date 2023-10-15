@@ -75,7 +75,7 @@ export default function SubmitField({ username, setShowSettings }) {
                             onChange={handleLanguageSelect}
                         >
                             {languages.map((lang, index) => (
-                                <MenuItem key={index} value={lang}>
+                                <MenuItem key={index} value={lang} style={{display: "block", textAlign: "center"}}>
                                     {lang}
                                 </MenuItem>
                             ))}
