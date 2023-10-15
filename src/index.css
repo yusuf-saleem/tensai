@@ -41,6 +41,7 @@ button:focus-visible {
 
 .typist-font {
     font-size: 64px;
+    color: #526D82;
 }
 
 .Cursor {
@@ -74,11 +75,43 @@ p {
     color: #526d82;
 }
 
+.section {
+    height: 300px;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: initial;
+    padding: 60px 0px;
+}
+
 /* Media query for smaller screens */
 @media screen and (max-width: 767px) {
     h1 {
         letter-spacing: 0px;
         font-size: 60px;
+    }
+    h2 {
+        font-size: 20px;
+        width: max-content;
+    }
+    h3 {
+        font-size: 20px;
+        width: max-content;
+    }
+    .typist{
+        width: 300px;
+    }
+    .typist-font {
+        font-size: 20px;
+        width: max-content;
+    }
+    .Cursor {
+        font-size: 20px; /* Change the font size to 64px */
+    }
+    #text-entry::-webkit-input-placeholder {
+        font-size: 14px;
+        /* Adjust this value for smaller screens */
     }
 }
 
@@ -88,41 +121,10 @@ p {
         letter-spacing: 20px;
         font-size: 120px;
     }
-}
-
-/* Media query for smaller screens */
-@media screen and (max-width: 767px) {
-    h2 {
-        font-size: 24px;
-    }
-}
-
-/* Media query for larger screens */
-@media screen and (min-width: 768px) {
     h2 {
         font-size: 30px;
     }
-}
+    h3 {
 
-/* Media query for smaller screens */
-@media screen and (max-width: 767px) {
-    #text-entry::-webkit-input-placeholder {
-        font-size: 14px;
-        /* Adjust this value for smaller screens */
-    }
-}
-
-@media (prefers-color-scheme: light) {
-    :root {
-        color: #213547;
-        background-color: #dbe2ef;
-    }
-
-    a:hover {
-        color: #747bff;
-    }
-
-    button {
-        background-color: #f9f9f9;
     }
 }

@@ -11,10 +11,8 @@ export default function Footer() {
         >
             <p
                 style={{
-                    position: "fixed",
-                    bottom: 10,
-                    left: 0,
                     width: "100%",
+                    height: "max-content",
                     textAlign: "center",
                 }}
             >

@@ -39,7 +39,7 @@ const HelloLanguages = () => {
             setCurrentLanguageIndex(
                 (prevIndex) => (prevIndex + 1) % languages.length
             );
-        }, 8000); // Change languages every 3 seconds (adjust as needed)
+        }, 10000); // Change languages every 3 seconds (adjust as needed)
 
         return () => {
             clearInterval(interval);
@@ -49,6 +49,7 @@ const HelloLanguages = () => {
     return (
         <div>
             <Typist
+                className="typist"
                 key={currentLanguageIndex} // Add a unique key to the Typist component
                 cursor={{ show: true, blink: true }}
                 onTypingDone={() => {
@@ -60,7 +61,7 @@ const HelloLanguages = () => {
                 }}
             >
                 <span className="typist-font">
-                    {languages[currentLanguageIndex]}
+                    "{languages[currentLanguageIndex]}"
                 </span>
                 <Typist.Delay ms={1000} />
                 <Typist.Backspace

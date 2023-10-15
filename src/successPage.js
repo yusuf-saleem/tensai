@@ -388,7 +388,6 @@ function Success() {
                     </div>
                 </>
             )}
-            <Footer />
         </ThemeProvider>
     );
 }

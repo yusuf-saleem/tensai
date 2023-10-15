@@ -30,7 +30,7 @@ export default function SubmitField({
                 textAlign: "center",
             }}
         >
-            <h2 id="sentence">
+            <h2 id="sentence" style={{color: "#213547"}}>
                 {!awaitingGPT || turnOver ? (
                     currentSentence
                 ) : (
