@@ -103,6 +103,7 @@ function Success() {
                 setUsername(value.data.user.email);
             } else {
                 console.log("Failed to get user data.");
+                navigate("/");
             }
         });
 
