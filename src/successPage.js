@@ -68,7 +68,6 @@ function Success() {
 
     useEffect(() => {
         if (tokens !== null && !hasEffectRun.current) {
-            console.log("Ready to begin");
             let initPrompt = process.env.REACT_APP_INIT_PROMPT;
             switch (difficulty) {
                 case 1:
@@ -102,13 +101,11 @@ function Success() {
                 email = value.data.user.email;
                 setUsername(value.data.user.email);
             } else {
-                console.log("Failed to get user data.");
                 navigate("/");
             }
         });
 
         await registerNewUser(email);
-        console.log("Attempting to get data for " + email);
 
         const { data, error } = await supabase
             .from("users")
@@ -116,7 +113,6 @@ function Success() {
             .eq("email", email)
             .single();
         if (error) {
-            console.log("Get user data error:");
             console.log(error);
         } else {
             console.log(data);
@@ -154,21 +150,14 @@ function Success() {
     };
 
     async function registerNewUser(email) {
-        console.log("Attempting to register user: " + email);
 
         const { error } = await supabase.from("users").insert({ email: email });
         if (error) {
-            console.log("Error registering new user:");
             console.log(error);
-        } else {
-            console.log("Successfully registered: " + email);
         }
     }
 
     async function processMessageToGPT(chatMessages) {
-        console.log(
-            "Sending to GPT: " + chatMessages[chatMessages.length - 1].message
-        );
 
         let apiMessages = chatMessages.map((messageObject) => {
             let role = "";
@@ -184,8 +173,6 @@ function Success() {
             model: "gpt-3.5-turbo",
             messages: [systemMessage, ...apiMessages],
         };
-        console.log("1");
-        console.log(apiKey);
         await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -195,12 +182,9 @@ function Success() {
             body: JSON.stringify(apiRequestBody),
         })
             .then((data) => {
-                console.log("2");
                 return data.json();
             })
             .then((data) => {
-                console.log("3");
-                console.log(data);
                 setMessages([
                     ...chatMessages,
                     {
@@ -208,8 +192,6 @@ function Success() {
                         sender: "ChatGPT",
                     },
                 ]);
-                console.log("4");
-                console.log("Received:", data.choices[0].message.content);
                 if (containsFeedback(data.choices[0].message.content)) {
                     const feedback =
                         data.choices[0].message.content.toLowerCase();
@@ -225,7 +207,6 @@ function Success() {
                     }
                 }
                 if (isNewSentenceReq) {
-                    console.log("New sentence received!");
                     let nextSentence = data.choices[0].message.content;
                     nextSentence = extractUpToDelimiters(nextSentence);
                     if (language !== "French" && language !== "Spanish") {
@@ -304,13 +285,7 @@ function Success() {
     };
 
     const handleSubmitAnswer = (event) => {
-        console.log("handleSubmitAnswer called");
-        if (enteredText === "") {
-            console.log("Empty  text!!!");
-        } else {
-            console.log("enteredTexttt:" + enteredText);
-        }
-        console.log("Setting newSentenceReq to false.");
+
         isNewSentenceReq = false;
         handleSend(
             `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
