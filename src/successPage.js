@@ -42,7 +42,7 @@ function Success() {
     const [turnOver, setTurnOver] = useState(false);
     const [result, setResult] = useState("");
     const [enteredText, setEnteredText] = useState("");
-    const [language, setLanguage] = useState("Japanese");
+    const [language, setLanguage] = useState(null);
     const [difficulty, setDifficulty] = useState(1);
     const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
@@ -60,6 +60,7 @@ function Success() {
     useEffect(() => {
         if (tokens > 0) {
             setLockUI(false);
+            if (language !== null) setShowSettings(false)
         } else {
             setLockUI(true);
         }
@@ -95,13 +96,18 @@ function Success() {
         await supabase.auth.getUser().then((value) => {
             if (value.data?.user) {
                 console.log("Got user:" + value.data.user.email);
+
+                if (value.data.user.language == null) setShowSettings(true);
+
                 email = value.data.user.email;
                 setUsername(value.data.user.email);
-                registerNewUser(value.data.user.email);
             } else {
                 console.log("Failed to get user data.");
             }
         });
+
+        await registerNewUser(email);
+        console.log("Attempting to get data for " + email);
 
         const { data, error } = await supabase
             .from("users")
@@ -120,7 +126,7 @@ function Success() {
     }
 
     const handleSend = async (message) => {
-        console.log("Current user tokens:" + tokens)
+        console.log("Current user tokens:" + tokens);
         if (tokens > 0) {
             const { error } = await supabase
                 .from("users")
@@ -146,12 +152,15 @@ function Success() {
         }
     };
 
-    async function registerNewUser() {
-        if (username !== "") {
-            const { error } = await supabase
-                .from("users")
-                .insert({ email: username });
-            if (error) console.log(error);
+    async function registerNewUser(email) {
+        console.log("Attempting to register user: " + email);
+
+        const { error } = await supabase.from("users").insert({ email: email });
+        if (error) {
+            console.log("Error registering new user:");
+            console.log(error);
+        } else {
+            console.log("Successfully registered: " + email);
         }
     }
 
@@ -174,8 +183,8 @@ function Success() {
             model: "gpt-3.5-turbo",
             messages: [systemMessage, ...apiMessages],
         };
-        console.log("1")
-        console.log(apiKey)
+        console.log("1");
+        console.log(apiKey);
         await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -185,12 +194,12 @@ function Success() {
             body: JSON.stringify(apiRequestBody),
         })
             .then((data) => {
-                console.log("2")
+                console.log("2");
                 return data.json();
             })
             .then((data) => {
-                console.log("3")
-                console.log(data)
+                console.log("3");
+                console.log(data);
                 setMessages([
                     ...chatMessages,
                     {
@@ -198,7 +207,7 @@ function Success() {
                         sender: "ChatGPT",
                     },
                 ]);
-                console.log("4")
+                console.log("4");
                 console.log("Received:", data.choices[0].message.content);
                 if (containsFeedback(data.choices[0].message.content)) {
                     const feedback =
@@ -210,15 +219,15 @@ function Success() {
                     } else {
                         console.log(
                             "wasn't able to determine the result because of weird response:" +
-                            feedback
+                                feedback
                         );
                     }
                 }
                 if (isNewSentenceReq) {
                     console.log("New sentence received!");
                     let nextSentence = data.choices[0].message.content;
-                    nextSentence = extractUpToDelimiters(nextSentence)
-                    if ((language !== "French") && (language !== "Spanish")) {
+                    nextSentence = extractUpToDelimiters(nextSentence);
+                    if (language !== "French" && language !== "Spanish") {
                         nextSentence = filterRomanChars(nextSentence);
                     }
                     setCurrentSentence(nextSentence);
@@ -240,13 +249,13 @@ function Success() {
             }
 
             // Skip characters '「' and '」'
-            if (char === '「' || char === '」') {
+            if (char === "「" || char === "」") {
                 continue;
             }
 
             extractedString += char;
 
-            if (char === '.' || char === '?' || char === '。' || char === '!') {
+            if (char === "." || char === "?" || char === "。" || char === "!") {
                 break;
             }
         }
@@ -263,18 +272,19 @@ function Success() {
             const char = inputString[i];
 
             // Check if the character is one of the specified delimiters
-            if (char === '.' || char === '?' || char === '。' || char === '!') {
+            if (char === "." || char === "?" || char === "。" || char === "!") {
                 foundDelimiter = true;
             }
 
             // If a delimiter is found or if it's not a Roman character or bracket,
             // add the character to the filtered result
-            if (foundDelimiter ||
+            if (
+                foundDelimiter ||
                 ((char.charCodeAt(0) < 65 || char.charCodeAt(0) > 90) &&
                     (char.charCodeAt(0) < 97 || char.charCodeAt(0) > 122) &&
-                    char !== '(' &&
-                    char !== ')' &&
-                    char !== ':')
+                    char !== "(" &&
+                    char !== ")" &&
+                    char !== ":")
             ) {
                 filteredString += char;
             }
@@ -293,7 +303,7 @@ function Success() {
     };
 
     const handleSubmitAnswer = (event) => {
-        console.log("handleSubmitAnswer called")
+        console.log("handleSubmitAnswer called");
         if (enteredText === "") {
             console.log("Empty  text!!!");
         } else {
@@ -301,7 +311,9 @@ function Success() {
         }
         console.log("Setting newSentenceReq to false.");
         isNewSentenceReq = false;
-        handleSend(`Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`);
+        handleSend(
+            `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
+        );
         document.getElementById("text-entry").disabled = true;
         document.getElementById("button-submit").disabled = true;
     };
@@ -380,7 +392,6 @@ function Success() {
                                                 `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
                                             );
                                         }
-
                                     }
                                 }}
                             />
