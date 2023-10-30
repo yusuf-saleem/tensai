@@ -15,6 +15,7 @@ a:hover {
 
 body {
     margin: 0;
+    overflow-x: hidden;
 }
 
 button {
@@ -24,24 +25,23 @@ button {
     font-size: 1em;
     font-weight: 500;
     font-family: inherit;
-    background-color: #1a1a1a;
     cursor: pointer;
     transition: border-color 0.25s;
     margin: 10px 0 0 0;
 }
 
-button:hover {
-    border-color: #646cff;
+button:focus {
+    border: none;
 }
 
-button:focus,
-button:focus-visible {
-    outline: 4px auto -webkit-focus-ring-color;
+button:hover {
+    border-color: #646cff;
+    border: none;
 }
 
 .typist-font {
     font-size: 64px;
-    color: #526D82;
+    color: #526d82;
 }
 
 .Cursor {
@@ -85,6 +85,83 @@ p {
     padding: 60px 0px;
 }
 
+.sidebar {
+    position: fixed;
+    text-align: center;
+    opacity: 80%;
+    background-color: #f9f7f7;
+    top: 20%;
+    right: -30vw;
+    height: 70vh;
+    width: 30vw;
+    transition: right 0.3s ease-in-out;
+    z-index: 1; /* Ensure it appears above other content */
+}
+
+.sidebar-content {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.vocabCard {
+    /* background-color: skyblue; */
+}
+
+.sidebar.open {
+    right: 0;
+    opacity: 80%;
+    text-align: left;
+    background-color: #f9f7f7;
+    transform: translateX(0); /* Slide it into view */
+    max-height: 70vh; /* Adjust to your preferred maximum height */
+    overflow-y: auto;
+}
+
+.sidebarButton {
+    position: absolute;
+    opacity: 80%;
+    background-color: #f9f7f7;
+    color: #526d82;
+    top: 20%;
+    right: 0; /* Adjust to your preferred position */
+    height: 70vh;
+    width: 40px;
+    z-index: 2; /* Ensure it appears above the sidebar */
+    margin: 0;
+    padding: 0;
+    transition: right 0.3s ease-in-out;
+
+    /* Not-rounded top-right corner */
+    border-top-right-radius: 0;
+    /* Not-rounded bottom-right corner */
+    border-bottom-right-radius: 0;
+
+    /* Add a black outline on the right side */
+
+    /* Make the text write vertically downward with each character upright */
+    writing-mode: vertical-rl; /* Vertical layout, text flows from right to left */
+    text-orientation: upright; /* Each character is upright */
+    font-weight: 900;
+
+    align-items: center;
+}
+
+.sidebarButton.open {
+    opacity: 80%;
+    right: 30vw;
+    border-right: 1px dotted lightgrey;
+}
+
+.submitField {
+    height: inherit;
+    width: 50vw;
+    background-color: #f9f7f7;
+    opacity: 60%;
+    border-radius: 50px;
+    margin-right: -40px;
+    justify-content: center;
+}
+
 /* Media query for smaller screens */
 @media screen and (max-width: 767px) {
     h1 {
@@ -99,7 +176,7 @@ p {
         font-size: 20px;
         width: max-content;
     }
-    .typist{
+    .typist {
         width: 300px;
     }
     .typist-font {
@@ -109,9 +186,34 @@ p {
     .Cursor {
         font-size: 20px; /* Change the font size to 64px */
     }
-    #text-entry::-webkit-input-placeholder {
-        font-size: 14px;
-        /* Adjust this value for smaller screens */
+    .sidebar {
+        position: fixed;
+        text-align: center;
+        opacity: 95%;
+        background-color: #f9f7f7;
+        top: 20%;
+        right: -75vw;
+        width: 75vw;
+        transition: right 0.3s ease-in-out;
+        z-index: 1; /* Ensure it appears above other content */
+    }
+
+    .sidebar.open {
+        opacity: 95%;
+    }
+
+    .sidebarButton {
+        opacity: 95%;
+        padding: 0;
+    }
+
+    .sidebarButton.open {
+        opacity: 95%;
+        right: 75vw;
+    }
+
+    .submitField {
+        width: 70vw;
     }
 }
 
@@ -125,6 +227,5 @@ p {
         font-size: 30px;
     }
     h3 {
-
     }
 }

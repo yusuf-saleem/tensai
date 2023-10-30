@@ -19,18 +19,18 @@ export default function SubmitField({
     disabled,
     result,
     turnOver,
-    lockUI
+    lockUI,
 }) {
-
-
-
     return (
         <div
             style={{
                 textAlign: "center",
+                justifyContent: "center",
+                alignContent: "center",
+                alignItems: "center",
             }}
         >
-            <h2 id="sentence" style={{color: "#213547"}}>
+            <h2 id="sentence" style={{ color: "#213547", width: "100%" }}>
                 {!awaitingGPT || turnOver ? (
                     currentSentence
                 ) : (
@@ -57,15 +57,7 @@ export default function SubmitField({
                         event.preventDefault();
                         onSendIconClick();
                     }}
-                    style={{
-                        height: "inherit",
-                        width: "50%",
-                        backgroundColor: "#F9F7F7",
-                        opacity: "60%",
-                        borderRadius: "50px",
-                        marginRight: "-40px",
-                        justifyContent: "center",
-                    }}
+                    className="submitField"
                 >
                     <TextField
                         id="text-entry"

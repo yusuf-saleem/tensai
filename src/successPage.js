@@ -4,6 +4,7 @@ import Header from "./header";
 import Footer from "./footer";
 import Settings from "./settings";
 import SubmitField from "./submitField";
+import VocabBar from "./VocabBar";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { useNavigate } from "react-router-dom";
@@ -36,13 +37,14 @@ function Success() {
     const navigate = useNavigate();
 
     const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
-    const [username, setUsername] = useState("");
+    const [username, setUsername] = useState(null);
     const [tokens, setTokens] = useState(null);
     const [lockUI, setLockUI] = useState(false);
     const [turnOver, setTurnOver] = useState(false);
     const [result, setResult] = useState("");
     const [enteredText, setEnteredText] = useState("");
     const [language, setLanguage] = useState(null);
+    const [vocabList, setVocabList] = useState(null);
     const [difficulty, setDifficulty] = useState(1);
     const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
@@ -60,7 +62,7 @@ function Success() {
     useEffect(() => {
         if (tokens > 0) {
             setLockUI(false);
-            if (language !== null) setShowSettings(false)
+            if (language !== null) setShowSettings(false);
         } else {
             setLockUI(true);
         }
@@ -95,6 +97,7 @@ function Success() {
         await supabase.auth.getUser().then((value) => {
             if (value.data?.user) {
                 console.log("Got user:" + value.data.user.email);
+                console.log(value.data.user);
 
                 if (value.data.user.language == null) setShowSettings(true);
 
@@ -119,6 +122,27 @@ function Success() {
             setTokens(data.tokens);
             setLanguage(data.language);
             setDifficulty(data.difficulty);
+
+            try {
+                console.log(
+                    "Pulling " + email + "'s " + data.language + " vocab list"
+                );
+                const { data: vocabList, error: vocabError } = await supabase
+                    .from("words")
+                    .select()
+                    .eq("email", email)
+                    .eq("language", data.language);
+
+                console.log("Got Vocab:", vocabList[0].word);
+                if (vocabError) {
+                    console.error("Error fetching vocab:", vocabError);
+                } else {
+                    console.log(vocabList);
+                    setVocabList(vocabList);
+                }
+            } catch (error) {
+                console.error("An error occurred:", error);
+            }
         }
     }
 
@@ -150,7 +174,6 @@ function Success() {
     };
 
     async function registerNewUser(email) {
-
         const { error } = await supabase.from("users").insert({ email: email });
         if (error) {
             console.log(error);
@@ -158,7 +181,6 @@ function Success() {
     }
 
     async function processMessageToGPT(chatMessages) {
-
         let apiMessages = chatMessages.map((messageObject) => {
             let role = "";
             if (messageObject.sender === "ChatGPT") {
@@ -192,6 +214,7 @@ function Success() {
                         sender: "ChatGPT",
                     },
                 ]);
+                console.log(data.choices[0].message.content);
                 if (containsFeedback(data.choices[0].message.content)) {
                     const feedback =
                         data.choices[0].message.content.toLowerCase();
@@ -285,7 +308,6 @@ function Success() {
     };
 
     const handleSubmitAnswer = (event) => {
-
         isNewSentenceReq = false;
         handleSend(
             `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
@@ -326,61 +348,81 @@ function Success() {
                             setShowSettings={setShowSettings}
                         />
                     ) : (
-                        <>
-                            <SubmitField
-                                awaitingGPT={awaitingGPT}
-                                turnOver={turnOver}
-                                currentSentence={currentSentence}
-                                enteredText={enteredText}
-                                onSubmit={handleSubmitAnswer}
-                                onTextChange={handleTextChange}
-                                disabled={awaitingGPT || turnOver}
-                                result={result}
-                                lockUI={lockUI}
-                                onSendIconClick={() => {
-                                    if (turnOver) {
-                                        setTurnOver(false);
-                                        setEnteredText("");
-                                        setResult("");
-                                        isNewSentenceReq = true;
-                                        if (difficulty === 1) {
-                                            handleSend(
-                                                `Give me another beginner level one.`
-                                            );
-                                        } else if (difficulty === 2) {
-                                            handleSend(
-                                                `Give me another intermediate level one.`
-                                            );
-                                        } else if (difficulty === 3) {
-                                            handleSend(
-                                                `Give me another advanced level one.`
-                                            );
-                                        } else {
-                                            handleSend(
-                                                `Give me another beginner level one.`
-                                            );
-                                        }
+                        <SubmitField
+                            awaitingGPT={awaitingGPT}
+                            turnOver={turnOver}
+                            currentSentence={currentSentence}
+                            enteredText={enteredText}
+                            onSubmit={handleSubmitAnswer}
+                            onTextChange={handleTextChange}
+                            disabled={awaitingGPT || turnOver}
+                            result={result}
+                            lockUI={lockUI}
+                            onSendIconClick={() => {
+                                if (turnOver) {
+                                    setTurnOver(false);
+                                    setEnteredText("");
+                                    setResult("");
+                                    isNewSentenceReq = true;
+                                    if (difficulty === 1) {
+                                        handleSend(
+                                            `Give me another beginner level one.`
+                                        );
+                                    } else if (difficulty === 2) {
+                                        handleSend(
+                                            `Give me another intermediate level one.`
+                                        );
+                                    } else if (difficulty === 3) {
+                                        handleSend(
+                                            `Give me another advanced level one.`
+                                        );
                                     } else {
-                                        if (enteredText !== "") {
-                                            isNewSentenceReq = false;
-                                            setTurnOver(true);
-                                            handleSend(
-                                                `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
-                                            );
-                                        }
+                                        handleSend(
+                                            `Give me another beginner level one.`
+                                        );
                                     }
-                                }}
-                            />
-                        </>
+                                } else {
+                                    if (enteredText !== "") {
+                                        isNewSentenceReq = false;
+                                        setTurnOver(true);
+                                        handleSend(
+                                            `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
+                                        );
+                                    }
+                                }
+                            }}
+                        />
                     )}
                 </>
             ) : (
                 <>
-                    <div style={{ textAlign: "center" }}>
-                        <CircularProgress />
+                    <Header
+                        username={username}
+                        signOutUser={signOutUser}
+                        setShowSettings={setShowSettings}
+                    />
+                    <div
+                        style={{
+                            width: "100%",
+                            height: "40vh", // Set the height to 100vh (viewport height)
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            textAlign: "center"
+                        }}
+                    >
+                        {tokens === 0 ? (
+                            <div>
+                                <h2>No more tokens!</h2>
+                                <a href="https://www.linkedin.com/in/yusuf--saleem/">Request for more</a>
+                            </div>
+                        ) : (
+                            <CircularProgress />
+                        )}
                     </div>
                 </>
             )}
+            <VocabBar isOpen={true} vocabList={vocabList} />
         </ThemeProvider>
     );
 }
