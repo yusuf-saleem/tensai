@@ -85,7 +85,10 @@ export default function App() {
                         </Button>
                     </div>
                     <div className="section">
-                        <HelloLanguages></HelloLanguages>
+                        <div style={{height: "90px"}}>
+                            <HelloLanguages></HelloLanguages>
+                        </div>
+
                         <h2 style={{ fontWeight: "lighter" }}>
                             Think you know a language well?
                         </h2>
@@ -94,7 +97,7 @@ export default function App() {
                             You attempt to translate them!
                         </h3>
                     </div>
-                    <div style={{backgroundColor: "white"}}>
+                    <div style={{ backgroundColor: "white" }}>
                         <Footer />
                     </div>
                 </div>
