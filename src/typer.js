@@ -39,7 +39,7 @@ const HelloLanguages = () => {
             setCurrentLanguageIndex(
                 (prevIndex) => (prevIndex + 1) % languages.length
             );
-        }, 10000); // Change languages every 3 seconds (adjust as needed)
+        }, 10000);
 
         return () => {
             clearInterval(interval);

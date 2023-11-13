@@ -123,26 +123,26 @@ function Success() {
             setLanguage(data.language);
             setDifficulty(data.difficulty);
 
-            try {
-                console.log(
-                    "Pulling " + email + "'s " + data.language + " vocab list"
-                );
-                const { data: vocabList, error: vocabError } = await supabase
-                    .from("words")
-                    .select()
-                    .eq("email", email)
-                    .eq("language", data.language);
+            // try {
+            //     console.log(
+            //         "Pulling " + email + "'s " + data.language + " vocab list"
+            //     );
+            //     const { data: vocabList, error: vocabError } = await supabase
+            //         .from("words")
+            //         .select()
+            //         .eq("email", email)
+            //         .eq("language", data.language);
 
-                console.log("Got Vocab:", vocabList[0].word);
-                if (vocabError) {
-                    console.error("Error fetching vocab:", vocabError);
-                } else {
-                    console.log(vocabList);
-                    setVocabList(vocabList);
-                }
-            } catch (error) {
-                console.error("An error occurred:", error);
-            }
+            //     console.log("Got Vocab:", vocabList[0].word);
+            //     if (vocabError) {
+            //         console.error("Error fetching vocab:", vocabError);
+            //     } else {
+            //         console.log(vocabList);
+            //         setVocabList(vocabList);
+            //     }
+            // } catch (error) {
+            //     console.error("An error occurred:", error);
+            // }
         }
     }
 
@@ -408,13 +408,15 @@ function Success() {
                             display: "flex",
                             justifyContent: "center",
                             alignItems: "center",
-                            textAlign: "center"
+                            textAlign: "center",
                         }}
                     >
                         {tokens === 0 ? (
                             <div>
                                 <h2>No more tokens!</h2>
-                                <a href="https://www.linkedin.com/in/yusuf--saleem/">Request for more</a>
+                                <a href="https://www.linkedin.com/in/yusuf--saleem/">
+                                    Request for more
+                                </a>
                             </div>
                         ) : (
                             <CircularProgress />
@@ -422,7 +424,15 @@ function Success() {
                     </div>
                 </>
             )}
-            <VocabBar isOpen={true} vocabList={vocabList} />
+            {username !== null && language !== null && (
+                <VocabBar
+                isOpen={true}
+                email={username}
+                language={language}
+                supabase={supabase}
+            />
+            )}
+            
         </ThemeProvider>
     );
 }

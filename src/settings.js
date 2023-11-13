@@ -90,6 +90,7 @@ export default function SubmitField({ username, setShowSettings }) {
                     />
                     <Button
                         variant="contained"
+                        fullWidth
                         style={{
                             marginTop: "10px",
                         }}

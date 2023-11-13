@@ -87,24 +87,15 @@ p {
 
 .sidebar {
     position: fixed;
-    text-align: center;
+    text-align: left;
     opacity: 80%;
     background-color: #f9f7f7;
     top: 20%;
-    right: -30vw;
+    right: -20vw;
     height: 70vh;
-    width: 30vw;
+    width: 20vw;
     transition: right 0.3s ease-in-out;
     z-index: 1; /* Ensure it appears above other content */
-}
-
-.sidebar-content {
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-.vocabCard {
-    /* background-color: skyblue; */
 }
 
 .sidebar.open {
@@ -114,7 +105,40 @@ p {
     background-color: #f9f7f7;
     transform: translateX(0); /* Slide it into view */
     max-height: 70vh; /* Adjust to your preferred maximum height */
+    height: 70vh;
+}
+
+.vocabcard-container {
+    flex: 1;
     overflow-y: auto;
+    height: 70px;
+    box-shadow: inset -8px -8px 10px -8px rgba(0, 0, 0, 0.7);
+}
+
+.vocab-submit-container {
+    height: max-content;
+    margin-top: auto;
+    flex-shrink: 0;
+    display: "flex";
+    flex-direction: column;
+    height: max-content;
+    margin: 10px 10px 10px 0;
+}
+
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    padding-left: 10px;
+    height: inherit;
+}
+
+.vocabCard h2 {
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.vocabCard p {
+    margin-bottom: 10px;
 }
 
 .sidebarButton {
@@ -148,7 +172,7 @@ p {
 
 .sidebarButton.open {
     opacity: 80%;
-    right: 30vw;
+    right: 20vw;
     border-right: 1px dotted lightgrey;
 }
 
@@ -188,8 +212,7 @@ p {
     }
     .sidebar {
         position: fixed;
-        text-align: center;
-        opacity: 95%;
+        text-align: left;
         background-color: #f9f7f7;
         top: 20%;
         right: -75vw;
@@ -199,16 +222,17 @@ p {
     }
 
     .sidebar.open {
-        opacity: 95%;
+        opacity: 100%;
+        overflow-y: auto;
     }
 
     .sidebarButton {
-        opacity: 95%;
+        opacity: 100%;
         padding: 0;
     }
 
     .sidebarButton.open {
-        opacity: 95%;
+        opacity: 100%;
         right: 75vw;
     }
 
