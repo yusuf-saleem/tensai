@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
+import "./index.css";
 import Header from "./header";
 import Footer from "./footer";
 import Settings from "./settings";
-import SubmitField from "./submitField";
 import VocabBar from "./VocabBar";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Typist from "react-typist";
+import SendIcon from "@mui/icons-material/Send";
 
 const theme = createTheme({
     palette: {
@@ -49,10 +53,15 @@ function Success() {
     const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
     const [currentSentence, setCurrentSentence] = useState("...");
-    const [showSettings, setShowSettings] = useState("false");
+    const [showSettings, setShowSettings] = useState(false);
+    const [animationFinished, setAnimationFinished] = useState(false);
     var isNewSentenceReq = true;
-
     const hasEffectRun = useRef(false);
+    const [forceRerender, setForceRerender] = useState(false);
+
+    const onAnimationEnd = () => {
+        setAnimationFinished(true);
+    };
 
     useEffect(() => {
         getUserData();
@@ -62,11 +71,14 @@ function Success() {
     useEffect(() => {
         if (tokens > 0) {
             setLockUI(false);
-            if (language !== null) setShowSettings(false);
         } else {
             setLockUI(true);
         }
     }, [tokens]);
+
+    useEffect(() => {
+        setForceRerender(false);
+    }, [forceRerender]);
 
     useEffect(() => {
         if (tokens !== null && !hasEffectRun.current) {
@@ -99,8 +111,6 @@ function Success() {
                 console.log("Got user:" + value.data.user.email);
                 console.log(value.data.user);
 
-                if (value.data.user.language == null) setShowSettings(true);
-
                 email = value.data.user.email;
                 setUsername(value.data.user.email);
             } else {
@@ -118,36 +128,19 @@ function Success() {
         if (error) {
             console.log(error);
         } else {
-            console.log(data);
             setTokens(data.tokens);
             setLanguage(data.language);
             setDifficulty(data.difficulty);
 
-            // try {
-            //     console.log(
-            //         "Pulling " + email + "'s " + data.language + " vocab list"
-            //     );
-            //     const { data: vocabList, error: vocabError } = await supabase
-            //         .from("words")
-            //         .select()
-            //         .eq("email", email)
-            //         .eq("language", data.language);
-
-            //     console.log("Got Vocab:", vocabList[0].word);
-            //     if (vocabError) {
-            //         console.error("Error fetching vocab:", vocabError);
-            //     } else {
-            //         console.log(vocabList);
-            //         setVocabList(vocabList);
-            //     }
-            // } catch (error) {
-            //     console.error("An error occurred:", error);
-            // }
+            if (data.language === null || data.difficulty === null) {
+                setShowSettings(true);
+            } else {
+                setShowSettings(false);
+            }
         }
     }
 
     const handleSend = async (message) => {
-        console.log("Current user tokens:" + tokens);
         if (tokens > 0) {
             const { error } = await supabase
                 .from("users")
@@ -168,7 +161,7 @@ function Success() {
             SetAwaitingGPT(true);
             await processMessageToGPT(newMessages);
         } else {
-            console.log("[handleSend]: No tokens remaining");
+            console.log("No tokens remaining");
             setLockUI(true);
         }
     };
@@ -192,7 +185,7 @@ function Success() {
         });
 
         const apiRequestBody = {
-            model: "gpt-3.5-turbo",
+            model: "gpt-4",
             messages: [systemMessage, ...apiMessages],
         };
         await fetch("https://api.openai.com/v1/chat/completions", {
@@ -240,6 +233,29 @@ function Success() {
                 SetAwaitingGPT(false);
                 isNewSentenceReq = true;
             });
+    }
+
+    function requestNewSentence() {
+        setTurnOver(false);
+        setEnteredText("");
+        setResult("");
+        isNewSentenceReq = true;
+        if (difficulty === 1) {
+            handleSend(`Give me another beginner level one.`);
+        } else if (difficulty === 2) {
+            handleSend(`Give me another intermediate level one.`);
+        } else if (difficulty === 3) {
+            handleSend(`Give me another advanced level one.`);
+        } else {
+            handleSend(`Give me another beginner level one.`);
+        }
+    }
+
+    function handleSubmitAnswer2() {
+        if (turnOver) {
+            requestNewSentence();
+        } else {
+        }
     }
 
     function extractUpToDelimiters(inputString) {
@@ -348,50 +364,145 @@ function Success() {
                             setShowSettings={setShowSettings}
                         />
                     ) : (
-                        <SubmitField
-                            awaitingGPT={awaitingGPT}
-                            turnOver={turnOver}
-                            currentSentence={currentSentence}
-                            enteredText={enteredText}
-                            onSubmit={handleSubmitAnswer}
-                            onTextChange={handleTextChange}
-                            disabled={awaitingGPT || turnOver}
-                            result={result}
-                            lockUI={lockUI}
-                            onSendIconClick={() => {
-                                if (turnOver) {
-                                    setTurnOver(false);
-                                    setEnteredText("");
-                                    setResult("");
-                                    isNewSentenceReq = true;
-                                    if (difficulty === 1) {
-                                        handleSend(
-                                            `Give me another beginner level one.`
-                                        );
-                                    } else if (difficulty === 2) {
-                                        handleSend(
-                                            `Give me another intermediate level one.`
-                                        );
-                                    } else if (difficulty === 3) {
-                                        handleSend(
-                                            `Give me another advanced level one.`
-                                        );
-                                    } else {
-                                        handleSend(
-                                            `Give me another beginner level one.`
-                                        );
-                                    }
-                                } else {
-                                    if (enteredText !== "") {
-                                        isNewSentenceReq = false;
-                                        setTurnOver(true);
-                                        handleSend(
-                                            `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
-                                        );
-                                    }
-                                }
+                        <div
+                            style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                textAlign: "center",
                             }}
-                        />
+                        >
+                            {!awaitingGPT || turnOver ? (
+                                <Typist
+                                    className="typist"
+                                    cursor={{
+                                        show: true,
+                                        blink: true,
+                                        hideWhenDone: true,
+                                    }}
+                                >
+                                    <span className="typist-font">
+                                        {currentSentence}
+                                    </span>
+                                </Typist>
+                            ) : (
+                                <CircularProgress size={40} />
+                            )}
+                            <br />
+                            <br />
+                            <form
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    width: "65%",
+                                    textAlign: "center",
+                                    alignItems: "center",
+                                }}
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    if (!turnOver) {
+                                        if (enteredText !== "") {
+                                            isNewSentenceReq = false;
+                                            setTurnOver(true);
+                                            handleSend(
+                                                `Here is my translation:"${enteredText}"\nWhich of the following options best describes my translation? [Correct|Incorrect]`
+                                            );
+                                            // setEnteredText("");
+                                            setLockUI(true);
+                                        }
+                                    }
+                                }}
+                            >
+                                <TextField
+                                    variant="standard"
+                                    size="small"
+                                    autoComplete="off"
+                                    value={enteredText}
+                                    disabled={awaitingGPT || turnOver}
+                                    onChange={(event) => {
+                                        setEnteredText(event.target.value);
+                                    }}
+                                    inputProps={{
+                                        min: 0,
+                                        spellCheck: "false",
+                                        style: {
+                                            textAlign: "center",
+                                            fontSize: "5vw",
+                                        },
+                                    }}
+                                ></TextField>
+                                <br />
+                                <Button
+                                    type="submit"
+                                    variant="outlined"
+                                    size="large"
+                                    disabled={awaitingGPT || turnOver}
+                                    style={{
+                                        borderRadius: "100%", // Make the button round
+                                        minWidth: 0,
+                                        width: "70px", // Set a specific width if needed
+                                        height: "70px", // Set a specific height if needed
+                                    }}
+                                >
+                                    <SendIcon></SendIcon>
+                                </Button>
+                            </form>
+                            {turnOver && !awaitingGPT ? (
+                                <div
+                                    className={`line ${
+                                        forceRerender ? "force-rerender" : ""
+                                    }`}
+                                >
+                                    <h2
+                                        className="lineUp"
+                                        onAnimationEnd={onAnimationEnd}
+                                    >
+                                        {result === "incorrect" ? (
+                                            "Incorrect"
+                                        ) : result === "correct" ? (
+                                            "Correct"
+                                        ) : (
+                                            <></>
+                                        )}
+                                    </h2>
+                                    {animationFinished && (
+                                        <Button
+                                            variant="contained"
+                                            size="large"
+                                            onClick={() => {
+                                                setTurnOver(false);
+                                                setEnteredText("");
+                                                setResult("");
+                                                setForceRerender(true);
+                                                setAnimationFinished(false);
+                                                isNewSentenceReq = true;
+                                                if (difficulty === 1) {
+                                                    handleSend(
+                                                        `Give me another beginner level one.`
+                                                    );
+                                                } else if (difficulty === 2) {
+                                                    handleSend(
+                                                        `Give me another intermediate level one.`
+                                                    );
+                                                } else if (difficulty === 3) {
+                                                    handleSend(
+                                                        `Give me another advanced level one.`
+                                                    );
+                                                } else {
+                                                    handleSend(
+                                                        `Give me another beginner level one.`
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            Next
+                                        </Button>
+                                    )}
+                                </div>
+                            ) : (
+                                <></>
+                            )}
+                        </div>
                     )}
                 </>
             ) : (
@@ -403,7 +514,7 @@ function Success() {
                     />
                     <div
                         style={{
-                            width: "100%",
+                            width: "max-content",
                             height: "40vh", // Set the height to 100vh (viewport height)
                             display: "flex",
                             justifyContent: "center",
@@ -412,27 +523,26 @@ function Success() {
                         }}
                     >
                         {tokens === 0 ? (
-                            <div>
+                            <>
                                 <h2>No more tokens!</h2>
                                 <a href="https://www.linkedin.com/in/yusuf--saleem/">
                                     Request for more
                                 </a>
-                            </div>
+                            </>
                         ) : (
-                            <CircularProgress />
+                            <></>
                         )}
                     </div>
                 </>
             )}
             {username !== null && language !== null && (
                 <VocabBar
-                isOpen={true}
-                email={username}
-                language={language}
-                supabase={supabase}
-            />
+                    isOpen={true}
+                    email={username}
+                    language={language}
+                    supabase={supabase}
+                />
             )}
-            
         </ThemeProvider>
     );
 }

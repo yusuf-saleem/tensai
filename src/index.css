@@ -3,6 +3,41 @@
     font-weight: 400;
 }
 
+.line {
+    width: max-content;
+    height: max-content;
+    overflow: hidden;
+    padding: 0;
+    margin-bottom: 16px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
+
+/* lineup class and keyframes */
+.lineUp {
+    
+    font-size: 40px;
+    animation: 2s anim-lineUp ease-out;
+}
+@keyframes anim-lineUp {
+    0% {
+        opacity: 0;
+        transform: translateY(80%);
+    }
+    20% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(0%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0%);
+    }
+}
+
 a {
     font-weight: 500;
     color: #646cff;
@@ -37,6 +72,12 @@ button:focus {
 button:hover {
     border-color: #646cff;
     border: none;
+}
+
+.typist {
+    color: #526d82;
+    max-width: 70vw;
+    text-align: center;
 }
 
 .typist-font {
@@ -139,6 +180,9 @@ p {
 
 .vocabCard p {
     margin-bottom: 10px;
+}
+
+.sentence {
 }
 
 .sidebarButton {
