@@ -37,6 +37,13 @@ const systemMessage = {
     content: process.env.REACT_APP_SYSTEM_PROMPT,
 };
 
+const messages = [
+    {
+        role: "system",
+        content: process.env.REACT_APP_SYSTEM_PROMPT,
+    },
+];
+
 function Success() {
     const navigate = useNavigate();
 
@@ -50,7 +57,6 @@ function Success() {
     const [language, setLanguage] = useState(null);
     const [vocabList, setVocabList] = useState(null);
     const [difficulty, setDifficulty] = useState(1);
-    const [messages, setMessages] = useState([]);
     const [awaitingGPT, SetAwaitingGPT] = useState(false);
     const [currentSentence, setCurrentSentence] = useState("...");
     const [showSettings, setShowSettings] = useState(false);
@@ -108,9 +114,6 @@ function Success() {
 
         await supabase.auth.getUser().then((value) => {
             if (value.data?.user) {
-                console.log("Got user:" + value.data.user.email);
-                console.log(value.data.user);
-
                 email = value.data.user.email;
                 setUsername(value.data.user.email);
             } else {
@@ -142,6 +145,7 @@ function Success() {
 
     const handleSend = async (message) => {
         if (tokens > 0) {
+            // Decrement Tokens
             const { error } = await supabase
                 .from("users")
                 .update({ tokens: tokens - 1 })
@@ -149,17 +153,55 @@ function Success() {
             if (error) console.log(error);
             setTokens(tokens - 1);
 
+            // Create new message object
             const newMessage = {
-                message,
-                direction: "outgoing",
-                sender: "user",
+                role: "user",
+                content: message,
             };
+            messages.push(newMessage);
 
-            const newMessages = [...messages, newMessage];
-
-            setMessages(newMessages);
+            // Send request to BFF
             SetAwaitingGPT(true);
-            await processMessageToGPT(newMessages);
+            const response = await fetch("https://tensai-express.netlify.app/.netlify/functions/api", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(messages),
+            });
+
+            // Process response
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            const data = await response.json();
+            messages.push(data);
+
+            if (containsFeedback(data.content)) {
+                const feedback = data.content.toLowerCase();
+                if (feedback.includes("incorrect")) {
+                    setResult("incorrect");
+                } else if (feedback.includes("correct")) {
+                    setResult("correct");
+                } else {
+                    console.log(
+                        "wasn't able to determine the result because of weird response:" +
+                            feedback
+                    );
+                }
+            }
+
+            if (isNewSentenceReq) {
+                let nextSentence = data.content;
+                nextSentence = extractUpToDelimiters(nextSentence);
+                if (language !== "French" && language !== "Spanish") {
+                    nextSentence = filterRomanChars(nextSentence);
+                }
+                setCurrentSentence(nextSentence);
+            }
+            SetAwaitingGPT(false);
+            isNewSentenceReq = true;
         } else {
             console.log("No tokens remaining");
             setLockUI(true);
@@ -168,71 +210,6 @@ function Success() {
 
     async function registerNewUser(email) {
         const { error } = await supabase.from("users").insert({ email: email });
-        if (error) {
-            console.log(error);
-        }
-    }
-
-    async function processMessageToGPT(chatMessages) {
-        let apiMessages = chatMessages.map((messageObject) => {
-            let role = "";
-            if (messageObject.sender === "ChatGPT") {
-                role = "assistant";
-            } else {
-                role = "user";
-            }
-            return { role: role, content: messageObject.message };
-        });
-
-        const apiRequestBody = {
-            model: "gpt-4",
-            messages: [systemMessage, ...apiMessages],
-        };
-        await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                Authorization: "Bearer " + apiKey,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(apiRequestBody),
-        })
-            .then((data) => {
-                return data.json();
-            })
-            .then((data) => {
-                setMessages([
-                    ...chatMessages,
-                    {
-                        message: data.choices[0].message.content,
-                        sender: "ChatGPT",
-                    },
-                ]);
-                console.log(data.choices[0].message.content);
-                if (containsFeedback(data.choices[0].message.content)) {
-                    const feedback =
-                        data.choices[0].message.content.toLowerCase();
-                    if (feedback.includes("incorrect")) {
-                        setResult("incorrect");
-                    } else if (feedback.includes("correct")) {
-                        setResult("correct");
-                    } else {
-                        console.log(
-                            "wasn't able to determine the result because of weird response:" +
-                                feedback
-                        );
-                    }
-                }
-                if (isNewSentenceReq) {
-                    let nextSentence = data.choices[0].message.content;
-                    nextSentence = extractUpToDelimiters(nextSentence);
-                    if (language !== "French" && language !== "Spanish") {
-                        nextSentence = filterRomanChars(nextSentence);
-                    }
-                    setCurrentSentence(nextSentence);
-                }
-                SetAwaitingGPT(false);
-                isNewSentenceReq = true;
-            });
     }
 
     function requestNewSentence() {
@@ -264,12 +241,10 @@ function Success() {
         for (let i = 0; i < inputString.length; i++) {
             const char = inputString[i];
 
-            // Skip double quotation marks
             if (char === '"') {
                 continue;
             }
 
-            // Skip characters '「' and '」'
             if (char === "「" || char === "」") {
                 continue;
             }

@@ -21,9 +21,6 @@ const VocabBar = (props) => {
         if (email && language) {
             async function fetchVocabList() {
                 try {
-                    console.log(
-                        "Pulling " + email + "'s " + language + " vocab list"
-                    );
                     const { data: vocabList, error: vocabError } =
                         await supabase
                             .from("words")
@@ -34,7 +31,6 @@ const VocabBar = (props) => {
                     if (vocabError) {
                         console.error("Error fetching vocab:", vocabError);
                     } else {
-                        console.log(vocabList);
                         setVocabList(vocabList);
                     }
                 } catch (error) {
@@ -43,7 +39,6 @@ const VocabBar = (props) => {
             }
             fetchVocabList()
                 .then((result) => {
-                    console.log(result);
                 })
                 .catch((error) => {
                     console.error(error);
@@ -98,7 +93,7 @@ const VocabBar = (props) => {
                                             try {
                                                 const { data, error } =
                                                     await supabase
-                                                        .from("words") // Replace 'your_table_name' with the actual name of your Supabase table
+                                                        .from("words")
                                                         .delete()
                                                         .eq(
                                                             "word",
@@ -174,7 +169,7 @@ const VocabBar = (props) => {
                                 };
                                 try {
                                     const { data, error } = await supabase
-                                        .from("words") // Replace 'your_table_name' with the actual name of your Supabase table
+                                        .from("words")
                                         .insert([newWordObject]);
 
                                     if (error) {

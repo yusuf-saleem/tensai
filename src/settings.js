@@ -11,7 +11,6 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 
-
 const supabase = createClient(
     process.env.REACT_APP_SUPABASE_PROJECT_URL,
     process.env.REACT_APP_SUPABASE_SERVICE_ROLE_KEY
@@ -20,7 +19,19 @@ const supabase = createClient(
 export default function SubmitField({ username, setShowSettings }) {
     const navigate = useNavigate();
 
-    const languages = ["Japanese", "Chinese", "French", "Urdu"];
+    const languages = [
+        "Arabic",
+        "Chinese (Simplified)",
+        "Chinese (Traditional)",
+        "Hebrew",
+        "Hindi",
+        "Japanese",
+        "Korean",
+        "Russian",
+        "Thai",
+        "Ukrainian",
+        "Urdu",
+    ];
     const [selectedLanguage, setSelectedLanguage] = useState();
     const [selectedDifficulty, setSelectedDifficulty] = useState(1);
 
@@ -42,7 +53,6 @@ export default function SubmitField({ username, setShowSettings }) {
     };
 
     const handleLanguageSelect = (e) => {
-        console.log(e.target.value);
         setSelectedLanguage(e.target.value);
     };
 
@@ -75,7 +85,14 @@ export default function SubmitField({ username, setShowSettings }) {
                             onChange={handleLanguageSelect}
                         >
                             {languages.map((lang, index) => (
-                                <MenuItem key={index} value={lang} style={{display: "block", textAlign: "center"}}>
+                                <MenuItem
+                                    key={index}
+                                    value={lang}
+                                    style={{
+                                        display: "block",
+                                        textAlign: "center",
+                                    }}
+                                >
                                     {lang}
                                 </MenuItem>
                             ))}
@@ -109,7 +126,7 @@ export default function SubmitField({ username, setShowSettings }) {
                                 })
                                 .eq("email", username);
                             if (error) console.log(error);
-                            navigate(0)
+                            navigate(0);
                         }}
                     >
                         Begin
